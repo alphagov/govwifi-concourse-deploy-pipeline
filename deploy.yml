@@ -6,6 +6,7 @@ groups:
       - Logging API Tests
       - User Signup API Tests
       - Frontend Tests
+      - Safe Restarter Tests
 
 jobs:
   # testing + linting
@@ -87,6 +88,17 @@ jobs:
         - <<: *docker-cache-alpine
           resource: frontend-alpine-image
       - *test-and-lint
+  
+  - name: Safe Restarter Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: safe-restarter
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: safe-restarter-ruby-image
+      - *test-and-lint
 
 resources:
   # task runner
@@ -127,6 +139,12 @@ resources:
     type: git
     source:
       uri: "https://github.com/alphagov/govwifi-frontend.git"
+      branch: master
+  
+  - name: safe-restarter
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-safe-restarter.git"
       branch: master
 
   # common resources for caching
@@ -176,7 +194,13 @@ resources:
     source:
       repository: alpine
       tag: '3.8'
-
+  
+  # Safe Restarter docker caching
+  - name: safe-restarter-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.5.3-alpine3.9'
 
 resource_types: []
 
