@@ -7,6 +7,7 @@ groups:
       - User Signup API Tests
       - Frontend Tests
       - Safe Restarter Tests
+      - Frontend Acceptance Tests
 
 jobs:
   # testing + linting
@@ -88,7 +89,7 @@ jobs:
         - <<: *docker-cache-alpine
           resource: frontend-alpine-image
       - *test-and-lint
-  
+
   - name: Safe Restarter Tests
     interruptible: true
     plan:
@@ -99,6 +100,40 @@ jobs:
         - <<: *docker-cache-ruby
           resource: safe-restarter-ruby-image
       - *test-and-lint
+
+  - name: Frontend Acceptance Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: acceptance-tests
+        - get: src/.frontend
+          resource: frontend
+          trigger: true
+          passed: [Frontend Tests]
+        - get: src/.authentication-api
+          resource: auth
+          trigger: true
+          passed: [Authentication API Tests]
+        - get: src/.logging-api
+          resource: logging
+          trigger: true
+          passed: [Logging API Tests]
+
+        - *docker-cache-mysql
+        - *docker-cache-nginx
+        - <<: *docker-cache-ruby
+          resource: acceptance-tests-ruby-image
+        - <<: *docker-cache
+          get: docker-cache/frontend-alpine-image
+          resource: frontend-alpine-image
+        - <<: *docker-cache
+          get: docker-cache/auth-ruby-image
+          resource: auth-ruby-image
+        - <<: *docker-cache
+          get: docker-cache/logging-ruby-image
+          resource: logging-ruby-image
+
 
 resources:
   # task runner
@@ -134,17 +169,23 @@ resources:
     source:
       uri: "https://github.com/alphagov/govwifi-user-signup-api.git"
       branch: master
-  
+
   - name: frontend
     type: git
     source:
       uri: "https://github.com/alphagov/govwifi-frontend.git"
       branch: master
-  
+
   - name: safe-restarter
     type: git
     source:
       uri: "https://github.com/alphagov/govwifi-safe-restarter.git"
+      branch: master
+
+  - name: acceptance-tests
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-acceptance-tests.git"
       branch: master
 
   # common resources for caching
@@ -201,6 +242,13 @@ resources:
     source:
       repository: ruby
       tag: '2.5.3-alpine3.9'
+  
+  # Acceptance Tests docker caching
+  - name: acceptance-tests-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.5.3-alpine3.8'
 
 resource_types: []
 
@@ -230,6 +278,10 @@ x-get-aliases:
 
 
 x-docker-cache:
+  docker-cache: &docker-cache
+    get:
+    resource:
+    params: {format: oci}
   ruby: &docker-cache-ruby
     get: 'docker-cache/ruby-image'
     resource:
@@ -241,4 +293,8 @@ x-docker-cache:
   alpine: &docker-cache-alpine
     get: 'docker-cache/alpine-image'
     resource:
+    params: {format: oci}
+  alpine: &docker-cache-nginx
+    get: 'docker-cache/nginx-image'
+    resource: nginx-image
     params: {format: oci}
