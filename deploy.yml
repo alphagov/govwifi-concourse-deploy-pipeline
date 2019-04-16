@@ -1,0 +1,165 @@
+groups:
+  - name: Tests
+    jobs:
+      - Admin Tests
+      - Authentication API Tests
+      - Logging API Tests
+
+jobs:
+  # testing + linting
+  - name: Admin Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - get: govwifi-admin
+          resource: admin
+          trigger: true
+        - get: runner
+
+        # docker cache
+        - get: mysql-image
+          params: {format: oci}
+        - get: ruby-image
+          resource: admin-ruby-image
+          params: {format: oci}
+        - get: nginx-image
+          params: {format: oci}
+
+      - task: pre-build
+        privileged: true
+        file: govwifi-admin/ci/tasks/pre-build.yml
+        image: runner
+      - aggregate:
+        - task: lint
+          privileged: true
+          file: govwifi-admin/ci/tasks/lint.yml
+          image: runner
+        - task: test
+          privileged: true
+          file: govwifi-admin/ci/tasks/test.yml
+          image: runner
+
+  - name: Authentication API Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: auth
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: auth-ruby-image
+        - *docker-cache-mysql
+      - *test-and-lint
+  
+  - name: Logging API Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: logging
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: logging-ruby-image
+        - *docker-cache-mysql
+      - *test-and-lint
+
+resources:
+  # task runner
+  - name: runner
+    # See https://github.com/alphagov/govwifi-concourse-runner for a reference dockerfile
+    # readonly_private_ecr_repo_url is provided by the hosted Concourse
+    type: docker-image
+    source:
+      repository: "((readonly_private_ecr_repo_url))"
+      tag: concourse-runner-latest
+
+  # sources
+  - name: admin
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-admin.git"
+      branch: master
+  
+  - name: auth
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-authentication-api.git"
+      branch: master
+  
+  - name: logging
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-logging-api.git"
+      branch: master
+  
+  # common resources for caching
+  - name: mysql-image
+    type: registry-image
+    source:
+      repository: mysql
+      tag: '5.7'
+
+  - name: nginx-image
+    type: registry-image
+    source:
+      repository: nginx
+      tag: alpine
+
+  # Admin docker caching
+  - name: admin-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.6.2'
+  
+  # Auth docker caching
+  - name: auth-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.5.3-alpine'
+  
+  # Logging docker caching
+  - name: logging-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.6.1-alpine'
+
+
+resource_types: []
+
+
+x-tasks:
+  test-and-lint: &test-and-lint
+    do:
+      - task: pre-build
+        privileged: true
+        image: runner
+        file: src/ci/tasks/pre-build.yml
+      - aggregate:
+        - task: lint
+          privileged: true
+          image: runner
+          file: src/ci/tasks/lint.yml
+        - task: test
+          privileged: true
+          image: runner
+          file: src/ci/tasks/test.yml
+
+x-get-aliases:
+  source: &get-source
+    get: src
+    #resource: auth
+    trigger: true
+
+
+x-docker-cache:
+  ruby: &docker-cache-ruby
+    get: 'docker-cache/ruby-image'
+    #resource: ruby-image
+    params: {format: oci}
+  mysql: &docker-cache-mysql
+    get: 'docker-cache/mysql-image'
+    resource: mysql-image
+    params: {format: oci}
