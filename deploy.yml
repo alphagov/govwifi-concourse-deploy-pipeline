@@ -4,6 +4,8 @@ groups:
       - Admin Tests
       - Authentication API Tests
       - Logging API Tests
+      - User Signup API Tests
+      - Frontend Tests
 
 jobs:
   # testing + linting
@@ -63,6 +65,29 @@ jobs:
         - *docker-cache-mysql
       - *test-and-lint
 
+  - name: User Signup API Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: user-signup
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: user-signup-ruby-image
+        - *docker-cache-mysql
+      - *test-and-lint
+
+  - name: Frontend Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: frontend
+        - get: runner
+        - <<: *docker-cache-alpine
+          resource: frontend-alpine-image
+      - *test-and-lint
+
 resources:
   # task runner
   - name: runner
@@ -91,7 +116,19 @@ resources:
     source:
       uri: "https://github.com/alphagov/govwifi-logging-api.git"
       branch: master
+
+  - name: user-signup
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-user-signup-api.git"
+      branch: master
   
+  - name: frontend
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-frontend.git"
+      branch: master
+
   # common resources for caching
   - name: mysql-image
     type: registry-image
@@ -125,6 +162,20 @@ resources:
     source:
       repository: ruby
       tag: '2.6.1-alpine'
+  
+  # User Signup docker caching
+  - name: user-signup-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.5.1-alpine'
+  
+  # Frontend docker caching
+  - name: frontend-alpine-image
+    type: registry-image
+    source:
+      repository: alpine
+      tag: '3.8'
 
 
 resource_types: []
@@ -157,9 +208,13 @@ x-get-aliases:
 x-docker-cache:
   ruby: &docker-cache-ruby
     get: 'docker-cache/ruby-image'
-    #resource: ruby-image
+    resource:
     params: {format: oci}
   mysql: &docker-cache-mysql
     get: 'docker-cache/mysql-image'
     resource: mysql-image
+    params: {format: oci}
+  alpine: &docker-cache-alpine
+    get: 'docker-cache/alpine-image'
+    resource:
     params: {format: oci}
