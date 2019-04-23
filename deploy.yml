@@ -1,16 +1,74 @@
 groups:
-  - name: Tests
+  - name: Admin
     jobs:
       - Admin Tests
+  - name: Authentication API
+    jobs:
+      - Authentication API Tests
+      - Frontend Acceptance Tests
+      - Authentication API Staging Deploy
+      - Confirm Deploy to Authentication API Production
+      - Authentication API Production Deploy
+  - name: Logging API
+    jobs:
+      - Logging API Tests
+      - Frontend Acceptance Tests
+      - Logging API Staging Deploy
+      - Confirm Deploy to Logging API Production
+      - Logging API Production Deploy
+  - name: User Signup API
+    jobs:
+      - User Signup API Tests
+      - User Signup API Staging Deploy
+      - Confirm Deploy to User Signup API Production
+      - User Signup API Production Deploy
+  - name: Frontend
+    jobs:
+      - Frontend Tests
+      - Frontend Acceptance Tests
+      - Frontend Staging Deploy
+      - Confirm Deploy to Frontend Production
+      - Frontend Production Deploy
+  - name: Safe Restarter
+    jobs:
+      - Safe Restarter Tests
+      - Safe Restarter Staging Deploy
+      - Confirm Deploy to Safe Restarter Production
+      - Safe Restarter Production Deploy
+  - name: All Tests
+    jobs:
       - Authentication API Tests
       - Logging API Tests
       - User Signup API Tests
       - Frontend Tests
       - Safe Restarter Tests
       - Frontend Acceptance Tests
+  - name: All Staging Deploys
+    jobs:
+      - Authentication API Staging Deploy
+      - Logging API Staging Deploy
+      - User Signup API Staging Deploy
+      - Frontend Staging Deploy
+      - Safe Restarter Staging Deploy
+  - name: All Production Deploys
+    jobs:
+      - Confirm Deploy to Authentication API Production
+      - Authentication API Production Deploy
+
+      - Confirm Deploy to Logging API Production
+      - Logging API Production Deploy
+
+      - Confirm Deploy to User Signup API Production
+      - User Signup API Production Deploy
+
+      - Confirm Deploy to Frontend Production
+      - Frontend Production Deploy
+
+      - Confirm Deploy to Safe Restarter Production
+      - Safe Restarter Production Deploy
 
 jobs:
-  # testing + linting
+  ###### Tests + Lints ######
   - name: Admin Tests
     interruptible: true
     plan:
@@ -105,6 +163,7 @@ jobs:
     interruptible: true
     plan:
       - aggregate:
+        - get: runner
         - <<: *get-source
           resource: acceptance-tests
         - get: src/.frontend
@@ -134,6 +193,280 @@ jobs:
           get: docker-cache/logging-ruby-image
           resource: logging-ruby-image
 
+  ###### Staging Deploys ######
+
+  - name: Authentication API Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: auth
+          passed:
+            - Authentication API Tests
+            - Frontend Acceptance Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: staging
+      
+      - <<: *push-ecr
+        put: auth-api-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Frontend Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: frontend
+          passed:
+            - Frontend Tests
+            - Frontend Acceptance Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: staging
+      
+      - <<: *push-ecr
+        put: frontend-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Logging API Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: logging
+          passed:
+            - Logging API Tests
+            - Frontend Acceptance Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: staging
+      
+      - <<: *push-ecr
+        put: logging-api-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Safe Restarter Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: safe-restarter
+          passed:
+            - Safe Restarter Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: staging
+      
+      - <<: *push-ecr
+        put: safe-restarter-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: User Signup API Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: user-signup
+          passed:
+            - User Signup API Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: staging
+      
+      - <<: *push-ecr
+        put: user-signup-api-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  ###### Production Deploys #######
+
+  - name: Confirm Deploy to Authentication API Production
+    interruptible: true
+    plan:
+      - get: auth
+        passed: 
+          - Authentication API Tests
+          - Frontend Acceptance Tests
+          - Authentication API Staging Deploy
+
+  - name: Authentication API Production Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: auth
+          passed: [Confirm Deploy to Authentication API Production]
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: production
+      
+      - <<: *push-ecr
+        put: auth-api-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: production
+
+  - name: Confirm Deploy to Frontend Production
+    interruptible: true
+    plan:
+      - get: frontend
+        passed: 
+          - Frontend Tests
+          - Frontend Acceptance Tests
+          - Frontend Staging Deploy
+
+  - name: Frontend Production Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: frontend
+          passed: [Confirm Deploy to Frontend Production]
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: production
+      
+      - <<: *push-ecr
+        put: frontend-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: production
+
+  - name: Confirm Deploy to Logging API Production
+    interruptible: true
+    plan:
+      - get: logging
+        passed: 
+          - Logging API Tests
+          - Frontend Acceptance Tests
+          - Logging API Staging Deploy
+
+  - name: Logging API Production Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: logging
+          passed: [Confirm Deploy to Logging API Production]
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: production
+      
+      - <<: *push-ecr
+        put: logging-api-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: production
+
+  - name: Confirm Deploy to Safe Restarter Production
+    interruptible: true
+    plan:
+      - get: safe-restarter
+        passed: 
+          - Safe Restarter Tests
+          - Safe Restarter Staging Deploy
+
+  - name: Safe Restarter Production Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: safe-restarter
+          passed: [Confirm Deploy to Safe Restarter Production]
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: production
+      
+      - <<: *push-ecr
+        put: safe-restarter-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: production
+
+  - name: Confirm Deploy to User Signup API Production
+    interruptible: true
+    plan:
+      - get: user-signup
+        passed: 
+          - User Signup API Tests
+          - User Signup API Staging Deploy
+
+  - name: User Signup API Production Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: user-signup
+          passed: [Confirm Deploy to User Signup API Production]
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          TAG: production
+      
+      - <<: *push-ecr
+        put: user-signup-api-repo
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: production
 
 resources:
   # task runner
@@ -146,6 +479,12 @@ resources:
       tag: concourse-runner-latest
 
   # sources
+  - name: deploy-tools
+    type: git
+    source:
+      url: "https://github.com/cybojenix/govwifi-concourse-deploy-pipeline.git"
+      branch: master
+
   - name: admin
     type: git
     source:
@@ -187,6 +526,47 @@ resources:
     source:
       uri: "https://github.com/alphagov/govwifi-acceptance-tests.git"
       branch: master
+
+  # Docker repositories
+  - name: auth-api-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/authorisation-api"
+      tag: latest
+      aws_access_key_id: ((deploy-access-key-id))
+      aws_secret_access_key: ((deploy-secret-access-key))
+
+  - name: frontend-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/frontend"
+      tag: latest
+      aws_access_key_id: ((deploy-access-key-id))
+      aws_secret_access_key: ((deploy-secret-access-key))
+
+  - name: logging-api-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/logging-api"
+      tag: latest
+      aws_access_key_id: ((deploy-access-key-id))
+      aws_secret_access_key: ((deploy-secret-access-key))
+
+  - name: safe-restarter-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/safe-restarter"
+      tag: latest
+      aws_access_key_id: ((deploy-access-key-id))
+      aws_secret_access_key: ((deploy-secret-access-key))
+
+  - name: user-signup-api-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/user-signup-api"
+      tag: latest
+      aws_access_key_id: ((deploy-access-key-id))
+      aws_secret_access_key: ((deploy-secret-access-key))
 
   # common resources for caching
   - name: mysql-image
@@ -270,12 +650,36 @@ x-tasks:
           image: runner
           file: src/ci/tasks/test.yml
 
+  build-deployable: &build-deployable
+    task: build-deployable
+    privileged: true
+    # should output 'image/image.tar'
+    # should output 'image/tag' based on "TAG"
+    file: src/ci/tasks/build-deployable.yml
+    params: &build-deployable-params
+      TAG:
+
+  push-ecr: &push-ecr
+    put: # defined to target ECR
+    params:
+      # image output from build-deployable
+      tag_file: image/tag
+      import_file: image/image.tar
+    get_params:
+      skip_download: true
+
+  deploy: &deploy
+    task: deploy
+    image: runner
+    file: src/ci/tasks/deploy.yml
+    params: &deploy-params
+      STAGE:
+
 x-get-aliases:
   source: &get-source
     get: src
     #resource: auth
     trigger: true
-
 
 x-docker-cache:
   docker-cache: &docker-cache
