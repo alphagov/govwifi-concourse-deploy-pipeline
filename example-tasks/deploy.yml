@@ -6,6 +6,12 @@ params:
   AWS_ACCESS_KEY_ID:
   AWS_DEFAULT_REGION:
   AWS_SECRET_ACCESS_KEY:
+  
+  # These are set for deploy.sh and migrate.sh
+  SERVICE_NAME: "app"
+  CLUSTER_NAME: "app"
+  TASK_NAME: "app"
+  CONTAINER_NAME: "app"
 
 inputs:
   - name: src

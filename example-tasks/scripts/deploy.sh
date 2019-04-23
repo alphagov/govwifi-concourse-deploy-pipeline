@@ -8,8 +8,8 @@ function deploy() {
   local cluster_name service_name deploy_stage
 
   deploy_stage="$(stage_name)"
-  cluster_name="${deploy_stage}-<app>-cluster"
-  service_name="<app>-${deploy_stage}"
+  cluster_name="${deploy_stage}-${CLUSTER_NAME}-cluster"
+  service_name="${SERVICE_NAME}-${deploy_stage}"
 
   ecs_deploy \
     "${cluster_name}" \
