@@ -8,6 +8,58 @@ All tasks will be run using the [GovWifi Concourse Runner][govwifi-runner].
 
 This gives the task access to `docker`, `docker-compose`, `python2`, and `aws-cli`.
 
+## AWS Helpers
+
+for when running the `deploy` task, access is given to some functions that wrap `aws-cli`.
+
+To access, you can source it from the `deploy-tools` folder:
+
+```sh
+source deploy-tools/aws-helpers.sh
+```
+
+This gives you access to some useful functions:
+
+### `stage_name`
+
+Positional Arguments: none
+
+echo's the stage name used within the GovWifi AWS account.
+Utilises the `$STAGE` environment variable.
+
+This amounts to translating `production` into `wifi`.
+
+### `run_task_with_command`
+
+Positional Arguments:
+
+- `cluster_name`: The name of the ECS cluster
+- `service_name`: The name of the ECS service within the cluster
+- `task_definition`: the family name of the task definition
+- `docker_service_name`: The name of the docker service within the task definition to run under
+- `command`: The command to run inside the container, as a string, e.g. 'echo "hello, world"'
+
+Runs a task with an explicit command, useful for running one-shot tasks, like database migrations.
+
+### `ecs_deploy`
+
+Positional Arguments:
+
+- `cluster_name`: The name of the ECS cluster
+- `service_name`: The name of the ECS service within the cluster
+
+Updates and deploys an existing ECS service.
+
+### `ecs_deploy_region`
+
+Positional Arguments:
+
+- `cluster_name`: The name of the ECS cluster
+- `service_name`: The name of the ECS service within the cluster
+- `region`: The AWS region to target, e.g. 'eu-west-1' or 'eu-west-2'
+
+Updates and deploys an existing ECS service in a specific region.
+
 ## Adding a service
 
 There are some requirements a service must fulfil before adding it to this pipeline:
