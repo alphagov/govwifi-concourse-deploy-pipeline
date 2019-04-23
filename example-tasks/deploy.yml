@@ -1,0 +1,17 @@
+---
+platform: linux
+
+params:
+  STAGE:
+
+inputs:
+  - name: src
+  - name: deploy-tools
+
+run:
+  path: bash
+  args:
+    - '-exc'
+    - |
+      src/tasks/scripts/migrate.sh
+      src/tasks/scripts/deploy.sh
