@@ -482,7 +482,7 @@ resources:
   - name: deploy-tools
     type: git
     source:
-      url: "https://github.com/cybojenix/govwifi-concourse-deploy-pipeline.git"
+      url: "https://github.com/alphagov/govwifi-concourse-deploy-pipeline.git"
       branch: master
 
   - name: admin
