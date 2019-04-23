@@ -11,6 +11,7 @@ params:
   REPOSITORY: '<service name>'
   CONTEXT: src
   BUILD_ARG_BUNDLE_INSTALL_FLAGS: '--without test development'
+  TAG:
 
 inputs:
   - name: src
