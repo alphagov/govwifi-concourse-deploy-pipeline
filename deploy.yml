@@ -166,32 +166,19 @@ jobs:
         - get: runner
         - <<: *get-source
           resource: acceptance-tests
-        - get: src/.frontend
+        - get: frontend
           resource: frontend
           trigger: true
           passed: [Frontend Tests]
-        - get: src/.authentication-api
+        - get: authentication-api
           resource: auth
           trigger: true
           passed: [Authentication API Tests]
-        - get: src/.logging-api
+        - get: logging-api
           resource: logging
           trigger: true
           passed: [Logging API Tests]
-
-        - *docker-cache-mysql
-        - *docker-cache-nginx
-        - <<: *docker-cache-ruby
-          resource: acceptance-tests-ruby-image
-        - <<: *docker-cache
-          get: docker-cache/frontend-alpine-image
-          resource: frontend-alpine-image
-        - <<: *docker-cache
-          get: docker-cache/auth-ruby-image
-          resource: auth-ruby-image
-        - <<: *docker-cache
-          get: docker-cache/logging-ruby-image
-          resource: logging-ruby-image
+      - *test-and-lint
 
   ###### Staging Deploys ######
 
@@ -622,13 +609,6 @@ resources:
     source:
       repository: ruby
       tag: '2.5.3-alpine3.9'
-  
-  # Acceptance Tests docker caching
-  - name: acceptance-tests-ruby-image
-    type: registry-image
-    source:
-      repository: ruby
-      tag: '2.5.3-alpine3.8'
 
 resource_types: []
 
