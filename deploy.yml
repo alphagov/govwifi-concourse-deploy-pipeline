@@ -37,6 +37,7 @@ groups:
       - Safe Restarter Production Deploy
   - name: All Tests
     jobs:
+      - Admin Tests
       - Authentication API Tests
       - Logging API Tests
       - User Signup API Tests
@@ -169,15 +170,12 @@ jobs:
         - get: frontend
           resource: frontend
           trigger: true
-          passed: [Frontend Tests]
         - get: authentication-api
           resource: auth
           trigger: true
-          passed: [Authentication API Tests]
         - get: logging-api
           resource: logging
           trigger: true
-          passed: [Logging API Tests]
       - *test-and-lint
 
   ###### Staging Deploys ######
