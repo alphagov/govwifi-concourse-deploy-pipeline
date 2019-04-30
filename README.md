@@ -8,6 +8,32 @@ All tasks will be run using the [GovWifi Concourse Runner][govwifi-runner].
 
 This gives the task access to `docker`, `docker-compose`, `python2`, and `aws-cli`.
 
+This is accessible using the private ECR on the tag `concourse-runner-latest`:
+
+```yml
+image_resource:
+  type: docker-image
+    source:
+      repository: "((readonly_private_ecr_repo_url))"
+      tag: concourse-runner-latest
+```
+
+## GovWifi Builder Task
+
+Tasks and the pipeline will have access to the builder task image, located in the private ECR.
+
+This provides access to a `build` script, and the `img` tool. More details can be found on the [repo][govwifi-builder-task-repo].
+
+To access it, use this snippet, with the tag `concourse-builder-latest`:
+
+```yml
+image_resource:
+  type: docker-image
+    source:
+      repository: "((readonly_private_ecr_repo_url))"
+      tag: concourse-builder-latest
+```
+
 ## AWS Helpers
 
 for when running the `deploy` task, access is given to some functions that wrap `aws-cli`.
@@ -129,16 +155,8 @@ Location: `ci/tasks/build-deployable.yml`
 A task to build a deployable service image.
 
 The task must define its own runner.
-Most likely, you will be using Concourse's [builder-task][builder-task], however if you
-wish to use the GovWifi runner noted above, you can load it using this snippet:
-
-```yml
-image_resource:
-  type: docker-image
-    source:
-      repository: "((readonly_private_ecr_repo_url))"
-      tag: concourse-runner-latest
-```
+Most likely, you will be using the [builder task][builder-task], however if you
+wish, you can use the [GovWifi runner](#govwifi-concourse-runner) noted above.
 
 The task will be passed the params:
 - TAG: 'staging' | 'production'
@@ -179,4 +197,5 @@ This will contain useful functions around the `aws-cli` to help keep duplicate c
 [example-lint]: https://github.com/alphagov/govwifi-logging-api/blob/master/ci/tasks/lint.yml
 [example-build-deployable]: ./example-tasks/build-deployable.yml
 [example-deploy]: https://github.com/alphagov/govwifi-logging-api/blob/master/ci/tasks/deploy.yml
-[builder-task]: https://github.com/concourse/builder-task
+[govwifi-builder-task-repo]: https://github.com/govwifi-builder-task
+[builder-task]: #govwifi-builder-task
