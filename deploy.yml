@@ -74,33 +74,14 @@ jobs:
     interruptible: true
     plan:
       - aggregate:
-        - get: govwifi-admin
+        - <<: *get-source
           resource: admin
-          trigger: true
         - get: runner
-
-        # docker cache
-        - get: mysql-image
-          params: {format: oci}
-        - get: ruby-image
+        - <<: *docker-cache-ruby
           resource: admin-ruby-image
-          params: {format: oci}
-        - get: nginx-image
-          params: {format: oci}
-
-      - task: pre-build
-        privileged: true
-        file: govwifi-admin/ci/tasks/pre-build.yml
-        image: runner
-      - aggregate:
-        - task: lint
-          privileged: true
-          file: govwifi-admin/ci/tasks/lint.yml
-          image: runner
-        - task: test
-          privileged: true
-          file: govwifi-admin/ci/tasks/test.yml
-          image: runner
+        - *docker-cache-mysql
+        - *docker-cache-nginx
+      - *test-and-lint
 
   - name: Authentication API Tests
     interruptible: true
@@ -676,7 +657,7 @@ x-docker-cache:
     get: 'docker-cache/alpine-image'
     resource:
     params: {format: oci}
-  alpine: &docker-cache-nginx
+  nginx: &docker-cache-nginx
     get: 'docker-cache/nginx-image'
     resource: nginx-image
     params: {format: oci}
