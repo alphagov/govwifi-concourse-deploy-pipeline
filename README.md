@@ -13,9 +13,9 @@ This is accessible using the private ECR on the tag `concourse-runner-latest`:
 ```yml
 image_resource:
   type: docker-image
-    source:
-      repository: "((readonly_private_ecr_repo_url))"
-      tag: concourse-runner-latest
+  source:
+    repository: "((readonly_private_ecr_repo_url))"
+    tag: concourse-runner-latest
 ```
 
 ## GovWifi Builder Task
@@ -29,9 +29,9 @@ To access it, use this snippet, with the tag `concourse-builder-latest`:
 ```yml
 image_resource:
   type: docker-image
-    source:
-      repository: "((readonly_private_ecr_repo_url))"
-      tag: concourse-builder-latest
+  source:
+    repository: "((readonly_private_ecr_repo_url))"
+    tag: concourse-builder-latest
 ```
 
 ## AWS Helpers
