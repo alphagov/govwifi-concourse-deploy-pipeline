@@ -448,7 +448,7 @@ resources:
   - name: deploy-tools
     type: git
     source:
-      url: "https://github.com/alphagov/govwifi-concourse-deploy-pipeline.git"
+      uri: "https://github.com/alphagov/govwifi-concourse-deploy-pipeline.git"
       branch: master
 
   - name: admin
@@ -633,6 +633,9 @@ x-tasks:
     file: src/ci/tasks/deploy.yml
     params: &deploy-params
       STAGE:
+      AWS_ACCESS_KEY_ID: "((deploy-access-key-id))"
+      AWS_SECRET_ACCESS_KEY: "((deploy-secret-access-key))"
+      AWS_DEFAULT_REGION: "((deploy-region))"
 
 x-get-aliases:
   source: &get-source
