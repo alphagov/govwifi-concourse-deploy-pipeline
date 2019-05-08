@@ -175,10 +175,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/authorisation-api'
           TAG: staging
-      
+
       - <<: *push-ecr
         put: auth-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/authorisation-api
+          load_tag: staging
 
       - <<: *deploy
         params:
@@ -199,10 +204,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/frontend'
           TAG: staging
       
       - <<: *push-ecr
         put: frontend-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/frontend
+          load_tag: staging
 
       - <<: *deploy
         params:
@@ -223,10 +233,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/logging-api'
           TAG: staging
       
       - <<: *push-ecr
         put: logging-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/logging-api
+          load_tag: staging
 
       - <<: *deploy
         params:
@@ -246,10 +261,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/safe-restarter'
           TAG: staging
-      
+
       - <<: *push-ecr
         put: safe-restarter-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/safe-restarter
+          load_tag: staging
 
       - <<: *deploy
         params:
@@ -269,10 +289,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/user-signup-api'
           TAG: staging
       
       - <<: *push-ecr
         put: user-signup-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/user-signup-api
+          load_tag: staging
 
       - <<: *deploy
         params:
@@ -302,10 +327,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/authorisation-api'
           TAG: production
       
       - <<: *push-ecr
         put: auth-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/authorisation-api
+          load_tag: production
 
       - <<: *deploy
         params:
@@ -333,10 +363,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/frontend'
           TAG: production
       
       - <<: *push-ecr
         put: frontend-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/frontend
+          load_tag: production
 
       - <<: *deploy
         params:
@@ -364,10 +399,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/logging-api'
           TAG: production
       
       - <<: *push-ecr
         put: logging-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/logging-api
+          load_tag: production
 
       - <<: *deploy
         params:
@@ -394,10 +434,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/safe-restarter'
           TAG: production
       
       - <<: *push-ecr
         put: safe-restarter-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/safe-restarter
+          load_tag: production
 
       - <<: *deploy
         params:
@@ -424,10 +469,15 @@ jobs:
       - <<: *build-deployable
         params: 
           <<: *build-deployable-params
+          REPOSITORY: 'govwifi/user-signup-api'
           TAG: production
       
       - <<: *push-ecr
         put: user-signup-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/user-signup-api
+          load_tag: production
 
       - <<: *deploy
         params:
@@ -620,10 +670,12 @@ x-tasks:
 
   push-ecr: &push-ecr
     put: # defined to target ECR
-    params:
+    params: &push-ecr-params
       # image output from build-deployable
+      load_repository:
+      load_tag:
       tag_file: image/tag
-      import_file: image/image.tar
+      load_file: image/image.tar
     get_params:
       skip_download: true
 
