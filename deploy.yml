@@ -2,6 +2,9 @@ groups:
   - name: Admin
     jobs:
       - Admin Tests
+      - Admin Staging Deploy
+      - Confirm Deploy to Admin Production
+      - Admin Production Deploy
   - name: Authentication API
     jobs:
       - Authentication API Tests
@@ -46,6 +49,7 @@ groups:
       - Frontend Acceptance Tests
   - name: All Staging Deploys
     jobs:
+      - Admin Staging Deploy
       - Authentication API Staging Deploy
       - Logging API Staging Deploy
       - User Signup API Staging Deploy
@@ -53,6 +57,9 @@ groups:
       - Safe Restarter Staging Deploy
   - name: All Production Deploys
     jobs:
+      - Confirm Deploy to Admin Production
+      - Admin Production Deploy
+
       - Confirm Deploy to Authentication API Production
       - Authentication API Production Deploy
 
@@ -183,6 +190,34 @@ jobs:
         params:
           <<: *push-ecr-params
           load_repository: govwifi/authorisation-api
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Admin Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: admin
+          passed:
+            - Admin Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/admin'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: admin-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/admin
           load_tag: staging
 
       - <<: *deploy
@@ -335,6 +370,41 @@ jobs:
         params:
           <<: *push-ecr-params
           load_repository: govwifi/authorisation-api
+          load_tag: production
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: production
+
+  - name: Confirm Deploy to Admin Production
+    interruptible: true
+    plan:
+      - get: admin
+        passed: 
+          - Admin Tests
+          - Admin Staging Deploy
+
+  - name: Admin Production Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: admin
+          passed: [Confirm Deploy to Admin Production]
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params: 
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/admin'
+          TAG: production
+      
+      - <<: *push-ecr
+        put: admin-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/admin
           load_tag: production
 
       - <<: *deploy
@@ -544,6 +614,14 @@ resources:
       branch: master
 
   # Docker repositories
+  - name: admin-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/admin"
+      tag: latest
+      aws_access_key_id: ((deploy-access-key-id))
+      aws_secret_access_key: ((deploy-secret-access-key))
+
   - name: auth-api-repo
     type: docker-image
     source:
