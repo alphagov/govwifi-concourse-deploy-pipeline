@@ -74,8 +74,28 @@ groups:
 
       - Confirm Deploy to Safe Restarter Production
       - Safe Restarter Production Deploy
+  - name: self-update
+    jobs:
+      - self-update
 
 jobs:
+  - name: self-update
+    serial: true
+    plan:
+    - get: tech-ops
+      params:
+        submodules: none
+    - get: deploy-tools
+      trigger: true
+    - task: set-pipelines
+      file: tech-ops/ci/tasks/self-updating-pipeline.yaml
+      input_mapping: {repository: deploy-tools}
+      params:
+        CONCOURSE_TEAM: govwifi
+        CONCOURSE_PASSWORD: ((readonly_local_user_password))
+        PIPELINE_PATH: deploy.yml
+        PIPELINE_NAME: deploy
+
   ###### Tests + Lints ######
   - name: Admin Tests
     interruptible: true
@@ -565,6 +585,11 @@ resources:
       tag: concourse-runner-latest
 
   # sources
+  - name: tech-ops
+    type: git
+    source:
+      uri: https://github.com/alphagov/tech-ops.git
+
   - name: deploy-tools
     type: git
     source:
