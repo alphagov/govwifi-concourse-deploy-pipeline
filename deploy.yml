@@ -340,6 +340,7 @@ jobs:
             - User Signup API Tests
         - get: deploy-tools
         - get: runner
+        - get: wordlist-file
 
       - <<: *build-deployable
         params: 
@@ -741,6 +742,15 @@ resources:
     source:
       repository: ruby
       tag: '2.5.3-alpine3.9'
+
+  # S3 Resources
+  - name: wordlist-file
+    type: s3
+    source:
+      bucket: govwifi-wordlist
+      access_key_id: "((deploy-access-key-id))"
+      secret_access_key: "((deploy-secret-access-key))"
+      versioned_file: wordlist-short
 
 resource_types: []
 
