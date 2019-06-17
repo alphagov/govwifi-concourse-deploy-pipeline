@@ -556,6 +556,7 @@ jobs:
           passed: [Confirm Deploy to User Signup API Production]
         - get: deploy-tools
         - get: runner
+        - get: wordlist-file
 
       - <<: *build-deployable
         params: 
