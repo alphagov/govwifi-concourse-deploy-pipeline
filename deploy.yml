@@ -751,6 +751,7 @@ resources:
       access_key_id: "((deploy-access-key-id))"
       secret_access_key: "((deploy-secret-access-key))"
       versioned_file: wordlist-short
+      region_name: eu-west-2
 
 resource_types: []
 
