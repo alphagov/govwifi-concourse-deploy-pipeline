@@ -1,3 +1,77 @@
+x-tasks:
+  test-and-lint: &test-and-lint
+    do:
+      - task: pre-build
+        privileged: true
+        image: runner
+        file: src/ci/tasks/pre-build.yml
+      - aggregate:
+        - task: lint
+          privileged: true
+          image: runner
+          file: src/ci/tasks/lint.yml
+        - task: test
+          privileged: true
+          image: runner
+          file: src/ci/tasks/test.yml
+
+  build-deployable: &build-deployable
+    task: build-deployable
+    privileged: true
+    # should output 'image/image.tar'
+    # should output 'image/tag' based on "TAG"
+    file: src/ci/tasks/build-deployable.yml
+    params: &build-deployable-params
+      TAG:
+
+  push-ecr: &push-ecr
+    put: # defined to target ECR
+    params: &push-ecr-params
+      # image output from build-deployable
+      load_repository:
+      load_tag:
+      tag_file: image/tag
+      load_file: image/image.tar
+    get_params:
+      skip_download: true
+
+  deploy: &deploy
+    task: deploy
+    image: runner
+    file: src/ci/tasks/deploy.yml
+    params: &deploy-params
+      STAGE:
+      AWS_ACCESS_KEY_ID: "((deploy-access-key-id))"
+      AWS_SECRET_ACCESS_KEY: "((deploy-secret-access-key))"
+      AWS_DEFAULT_REGION: "((deploy-region))"
+
+x-get-aliases:
+  source: &get-source
+    get: src
+    #resource: auth
+    trigger: true
+
+x-docker-cache:
+  docker-cache: &docker-cache
+    get:
+    resource:
+    params: {format: oci}
+  ruby: &docker-cache-ruby
+    get: 'docker-cache/ruby-image'
+    resource:
+    params: {format: oci}
+  mysql: &docker-cache-mysql
+    get: 'docker-cache/mysql-image'
+    resource: mysql-image
+    params: {format: oci}
+  alpine: &docker-cache-alpine
+    get: 'docker-cache/alpine-image'
+    resource:
+    params: {format: oci}
+  nginx: &docker-cache-nginx
+    get: 'docker-cache/nginx-image'
+    resource: nginx-image
+    params: {format: oci}
 groups:
   - name: Admin
     jobs:
@@ -82,19 +156,14 @@ jobs:
   - name: self-update
     serial: true
     plan:
-    - get: tech-ops
-      params:
-        submodules: none
     - get: deploy-tools
       trigger: true
-    - task: set-pipelines
-      file: tech-ops/ci/tasks/self-updating-pipeline.yaml
-      input_mapping: {repository: deploy-tools}
+    - put: deploy-pipeline
       params:
-        CONCOURSE_TEAM: govwifi
-        CONCOURSE_PASSWORD: ((readonly_local_user_password))
-        PIPELINE_PATH: deploy.yml
-        PIPELINE_NAME: deploy
+        pipelines:
+          - name: deploy
+            team: govwifi
+            config_file: deploy-tools/deploy.yml
 
   ###### Tests + Lints ######
   - name: Admin Tests
@@ -600,12 +669,16 @@ resources:
       repository: "((readonly_private_ecr_repo_url))"
       tag: concourse-runner-latest
 
-  # sources
-  - name: tech-ops
-    type: git
+  # this pipeline
+  - name: deploy-pipeline
+    type: concourse-pipeline
     source:
-      uri: https://github.com/alphagov/tech-ops.git
+      teams:
+        - name: govwifi
+          username: govwifi
+          password: ((readonly_local_user_password))
 
+  # sources
   - name: deploy-tools
     type: git
     source:
@@ -776,80 +849,8 @@ resources:
       versioned_file: wordlist-short
       region_name: eu-west-2
 
-resource_types: []
-
-
-x-tasks:
-  test-and-lint: &test-and-lint
-    do:
-      - task: pre-build
-        privileged: true
-        image: runner
-        file: src/ci/tasks/pre-build.yml
-      - aggregate:
-        - task: lint
-          privileged: true
-          image: runner
-          file: src/ci/tasks/lint.yml
-        - task: test
-          privileged: true
-          image: runner
-          file: src/ci/tasks/test.yml
-
-  build-deployable: &build-deployable
-    task: build-deployable
-    privileged: true
-    # should output 'image/image.tar'
-    # should output 'image/tag' based on "TAG"
-    file: src/ci/tasks/build-deployable.yml
-    params: &build-deployable-params
-      TAG:
-
-  push-ecr: &push-ecr
-    put: # defined to target ECR
-    params: &push-ecr-params
-      # image output from build-deployable
-      load_repository:
-      load_tag:
-      tag_file: image/tag
-      load_file: image/image.tar
-    get_params:
-      skip_download: true
-
-  deploy: &deploy
-    task: deploy
-    image: runner
-    file: src/ci/tasks/deploy.yml
-    params: &deploy-params
-      STAGE:
-      AWS_ACCESS_KEY_ID: "((deploy-access-key-id))"
-      AWS_SECRET_ACCESS_KEY: "((deploy-secret-access-key))"
-      AWS_DEFAULT_REGION: "((deploy-region))"
-
-x-get-aliases:
-  source: &get-source
-    get: src
-    #resource: auth
-    trigger: true
-
-x-docker-cache:
-  docker-cache: &docker-cache
-    get:
-    resource:
-    params: {format: oci}
-  ruby: &docker-cache-ruby
-    get: 'docker-cache/ruby-image'
-    resource:
-    params: {format: oci}
-  mysql: &docker-cache-mysql
-    get: 'docker-cache/mysql-image'
-    resource: mysql-image
-    params: {format: oci}
-  alpine: &docker-cache-alpine
-    get: 'docker-cache/alpine-image'
-    resource:
-    params: {format: oci}
-  nginx: &docker-cache-nginx
-    get: 'docker-cache/nginx-image'
-    resource: nginx-image
-    params: {format: oci}
+resource_types:
+  - name: concourse-pipeline
+    type: docker-image
+    source:
+      repository: concourse/concourse-pipeline-resource
