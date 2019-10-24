@@ -326,6 +326,7 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
+        task: build-frontend-image
         params: 
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/frontend'
@@ -337,6 +338,14 @@ jobs:
           <<: *push-ecr-params
           load_repository: govwifi/frontend
           load_tag: staging
+
+      - <<: *build-deployable
+        task: build-raddb-image
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/raddb'
+          DOCKERFILE: src/Dockerfile.raddb
+          TAG: staging
 
       - <<: *push-ecr
         put: raddb-repo
