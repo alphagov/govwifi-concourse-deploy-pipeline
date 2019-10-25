@@ -549,6 +549,14 @@ jobs:
           load_repository: govwifi/frontend
           load_tag: production
 
+      - <<: *build-deployable
+        task: build-raddb-image
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/raddb'
+          DOCKERFILE: src/Dockerfile.raddb
+          TAG: production
+
       - <<: *push-ecr
         put: raddb-repo
         params:
