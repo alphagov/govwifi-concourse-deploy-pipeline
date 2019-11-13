@@ -60,6 +60,10 @@ x-docker-cache:
     get: 'docker-cache/ruby-image'
     resource:
     params: {format: oci}
+  python: &docker-cache-python
+    get: 'docker-cache/python-image'
+    resource:
+    params: {format: oci}
   mysql: &docker-cache-mysql
     get: 'docker-cache/mysql-image'
     resource: mysql-image
@@ -71,6 +75,10 @@ x-docker-cache:
   nginx: &docker-cache-nginx
     get: 'docker-cache/nginx-image'
     resource: nginx-image
+    params: {format: oci}
+  localstack: &docker-cache-localstack
+    get: 'docker-cache/localstack-image'
+    resource: localstack-image
     params: {format: oci}
 groups:
   - name: Admin
@@ -112,6 +120,10 @@ groups:
       - Safe Restarter Staging Deploy
       - Confirm Deploy to Safe Restarter Production
       - Safe Restarter Production Deploy
+  - name: Database Backup
+    jobs:
+      - Database Backup Tests
+      - Database Backup Staging Deploy
   - name: All Tests
     jobs:
       - Admin Tests
@@ -236,6 +248,24 @@ jobs:
         - <<: *docker-cache-ruby
           resource: safe-restarter-ruby-image
       - *test-and-lint
+
+  - name: Database Backup Tests
+    interruptible: true
+    plan:
+      - in_parallel:
+        - <<: *get-source
+          resource: database-backup
+        - get: runner
+        - <<: *docker-cache-python
+          resource: database-backup-image
+        - <<: *docker-cache-mysql
+          resource: mysql-image
+        - <<: *docker-cache-localstack
+          resource: localstack-image
+      - task: test
+        privileged: true
+        image: runner
+        file: src/ci/tasks/test.yml
 
   - name: Frontend Acceptance Tests
     interruptible: true
@@ -409,6 +439,34 @@ jobs:
         params:
           <<: *push-ecr-params
           load_repository: govwifi/safe-restarter
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Database Backup Staging Deploy
+    plan:
+      - aggregate:
+          - <<: *get-source
+            resource: database-backup
+            passed:
+              - Database Backup Tests
+          - get: deploy-tools
+          - get: runner
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/database-backup'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: database-backup-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/database-backup
           load_tag: staging
 
       - <<: *deploy
@@ -738,6 +796,12 @@ resources:
       uri: "https://github.com/alphagov/govwifi-safe-restarter.git"
       branch: master
 
+  - name: database-backup
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-database-backup.git"
+      branch: add_concourse_ci
+
   - name: acceptance-tests
     type: git
     source:
@@ -789,6 +853,14 @@ resources:
     type: docker-image
     source:
       repository: "((deploy-repository))/govwifi/safe-restarter"
+      tag: latest
+      aws_access_key_id: ((deploy-access-key-id))
+      aws_secret_access_key: ((deploy-secret-access-key))
+
+  - name: database-backup-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/database-backup"
       tag: latest
       aws_access_key_id: ((deploy-access-key-id))
       aws_secret_access_key: ((deploy-secret-access-key))
@@ -855,6 +927,20 @@ resources:
     source:
       repository: ruby
       tag: '2.5.3-alpine3.9'
+
+  # Database Backup docker caching
+  - name: database-backup-image
+    type: registry-image
+    source:
+      repository: python
+      tag: 3-alpine
+
+  # Fake S3 docker caching
+  - name: localstack-image
+    type: registry-image
+    source:
+      repository: localstack/localstack
+      tag: latest
 
   # S3 Resources
   - name: wordlist-file
