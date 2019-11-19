@@ -124,6 +124,8 @@ groups:
     jobs:
       - Database Backup Tests
       - Database Backup Staging Deploy
+      - Confirm Deploy to Database Backup Production
+      - Database Backup Production Deploy
   - name: All Tests
     jobs:
       - Admin Tests
@@ -691,6 +693,41 @@ jobs:
         params:
           <<: *push-ecr-params
           load_repository: govwifi/safe-restarter
+          load_tag: production
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: production
+
+  - name: Confirm Deploy to Database Backup Production
+    interruptible: true
+    plan:
+      - get: database-backup
+        passed:
+          - Database Backup Tests
+          - Database Backup Staging Deploy
+
+  - name: Database Backup Production Deploy
+    plan:
+      - aggregate:
+          - <<: *get-source
+            resource: database-backup
+            passed: [Confirm Deploy to Database Backup Production]
+          - get: deploy-tools
+          - get: runner
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/database-backup'
+          TAG: production
+
+      - <<: *push-ecr
+        put: database-backup-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/database-backup
           load_tag: production
 
       - <<: *deploy
