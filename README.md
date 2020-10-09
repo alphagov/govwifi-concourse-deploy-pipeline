@@ -4,7 +4,7 @@ Concourse pipeline for managing deployments of all GovWifi services.
 
 ## GovWifi Concourse Runner
 
-All tasks will be run using the [GovWifi Concourse Runner][https://github.com/alphagov/govwifi-concourse-runner].
+All tasks will be run using the [GovWifi Concourse Runner](https://github.com/alphagov/govwifi-concourse-runner).
 
 This gives the task access to `docker`, `docker-compose`, `python2`, and `aws-cli`.
 
@@ -22,7 +22,7 @@ image_resource:
 
 Tasks and the pipeline will have access to the builder task image, located in the private ECR.
 
-This provides access to a `build` script, and the `img` tool. More details can be found on the [repo][https://github.com/alphagov/govwifi-builder-task].
+This provides access to a `build` script, and the `img` tool. More details can be found on the [repo](https://github.com/alphagov/govwifi-builder-task).
 
 To access it, use this snippet, with the tag `concourse-builder-latest`:
 
