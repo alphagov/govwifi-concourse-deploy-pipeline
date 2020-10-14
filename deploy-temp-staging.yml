@@ -1,0 +1,873 @@
+x-tasks:
+  test-and-lint: &test-and-lint
+    do:
+      - task: pre-build
+        privileged: true
+        image: runner
+        file: src/ci/tasks/pre-build.yml
+      - aggregate:
+        - task: lint
+          privileged: true
+          image: runner
+          file: src/ci/tasks/lint.yml
+        - task: test
+          privileged: true
+          image: runner
+          file: src/ci/tasks/test.yml
+
+  build-deployable: &build-deployable
+    task: build-deployable
+    privileged: true
+    # should output 'image/image.tar'
+    # should output 'image/tag' based on "TAG"
+    file: src/ci/tasks/build-deployable.yml
+    params: &build-deployable-params
+      TAG:
+
+  push-ecr: &push-ecr
+    put: # defined to target ECR
+    params: &push-ecr-params
+      # image output from build-deployable
+      load_repository:
+      load_tag:
+      tag_file: image/tag
+      load_file: image/image.tar
+    get_params:
+      skip_download: true
+
+  deploy: &deploy
+    task: deploy
+    image: runner
+    file: src/ci/tasks/deploy.yml
+    params: &deploy-params
+      STAGE:
+      AWS_ACCESS_KEY_ID: "((staging-temp-deploy-access-key-id))"
+      AWS_SECRET_ACCESS_KEY: "((staging-temp-deploy-secret-access-key))"
+      AWS_DEFAULT_REGION: "((staging-temp-deploy-region))"
+
+x-get-aliases:
+  source: &get-source
+    get: src
+    #resource: auth
+    trigger: true
+
+x-docker-cache:
+  docker-cache: &docker-cache
+    get:
+    resource:
+    params: {format: oci}
+  ruby: &docker-cache-ruby
+    get: 'docker-cache/ruby-image'
+    resource:
+    params: {format: oci}
+  mysql: &docker-cache-mysql
+    get: 'docker-cache/mysql-image'
+    resource: mysql-image
+    params: {format: oci}
+  alpine: &docker-cache-alpine
+    get: 'docker-cache/alpine-image'
+    resource:
+    params: {format: oci}
+  nginx: &docker-cache-nginx
+    get: 'docker-cache/nginx-image'
+    resource: nginx-image
+    params: {format: oci}
+groups:
+  - name: Admin
+    jobs:
+      - Admin Tests
+      - Admin Staging Deploy
+      # - Confirm Deploy to Admin Production
+      # - Admin Production Deploy
+  - name: Authentication API
+    jobs:
+      - Authentication API Tests
+      - Frontend Acceptance Tests
+      - Authentication API Staging Deploy
+      # - Confirm Deploy to Authentication API Production
+      # - Authentication API Production Deploy
+  - name: Logging API
+    jobs:
+      - Logging API Tests
+      - Frontend Acceptance Tests
+      - Logging API Staging Deploy
+      # - Confirm Deploy to Logging API Production
+      # - Logging API Production Deploy
+  - name: User Signup API
+    jobs:
+      - User Signup API Tests
+      - User Signup API Staging Deploy
+      # - Confirm Deploy to User Signup API Production
+      # - User Signup API Production Deploy
+  - name: Frontend
+    jobs:
+      - Frontend Tests
+      - Frontend Acceptance Tests
+      - Frontend Staging Deploy
+      # - Confirm Deploy to Frontend Production
+      # - Frontend Production Deploy
+  - name: Safe Restarter
+    jobs:
+      - Safe Restarter Tests
+      - Safe Restarter Staging Deploy
+      # - Confirm Deploy to Safe Restarter Production
+      # - Safe Restarter Production Deploy
+  - name: All Tests
+    jobs:
+      - Admin Tests
+      - Authentication API Tests
+      - Logging API Tests
+      - User Signup API Tests
+      - Frontend Tests
+      - Safe Restarter Tests
+      - Frontend Acceptance Tests
+  - name: All Staging Deploys
+    jobs:
+      - Admin Staging Deploy
+      - Authentication API Staging Deploy
+      - Logging API Staging Deploy
+      - User Signup API Staging Deploy
+      - Frontend Staging Deploy
+      - Safe Restarter Staging Deploy
+  # - name: All Production Deploys
+  #   jobs:
+  #     - Confirm Deploy to Admin Production
+  #     - Admin Production Deploy
+  #
+  #     - Confirm Deploy to Authentication API Production
+  #     - Authentication API Production Deploy
+  #
+  #     - Confirm Deploy to Logging API Production
+  #     - Logging API Production Deploy
+  #
+  #     - Confirm Deploy to User Signup API Production
+  #     - User Signup API Production Deploy
+  #
+  #     - Confirm Deploy to Frontend Production
+  #     - Frontend Production Deploy
+  #
+  #     - Confirm Deploy to Safe Restarter Production
+  #     - Safe Restarter Production Deploy
+  - name: self-update
+    jobs:
+      - self-update
+
+jobs:
+  - name: self-update
+    serial: true
+    plan:
+    - get: deploy-tools
+      trigger: true
+    - put: deploy-pipeline
+      params:
+        pipelines:
+          - name: deploy
+            team: govwifi
+            config_file: deploy-tools/deploy.yml
+
+  ###### Tests + Lints ######
+  - name: Admin Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: admin
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: admin-ruby-image
+        - *docker-cache-mysql
+        - *docker-cache-nginx
+      - *test-and-lint
+
+  - name: Authentication API Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: auth
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: auth-ruby-image
+        - *docker-cache-mysql
+      - *test-and-lint
+
+  - name: Logging API Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: logging
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: logging-ruby-image
+        - *docker-cache-mysql
+      - *test-and-lint
+
+  - name: User Signup API Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: user-signup
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: user-signup-ruby-image
+        - *docker-cache-mysql
+      - *test-and-lint
+
+  - name: Frontend Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: frontend
+        - get: runner
+        - <<: *docker-cache-alpine
+          resource: frontend-alpine-image
+      - *test-and-lint
+
+  - name: Safe Restarter Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: safe-restarter
+        - get: runner
+        - <<: *docker-cache-ruby
+          resource: safe-restarter-ruby-image
+      - *test-and-lint
+
+  - name: Frontend Acceptance Tests
+    interruptible: true
+    plan:
+      - aggregate:
+        - get: runner
+        - <<: *get-source
+          resource: acceptance-tests
+        - get: frontend
+          resource: frontend
+          trigger: true
+        - get: authentication-api
+          resource: auth
+          trigger: true
+        - get: logging-api
+          resource: logging
+          trigger: true
+      - *test-and-lint
+
+  ###### Staging Deploys ######
+
+  - name: Authentication API Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: auth
+          passed:
+            - Authentication API Tests
+            - Frontend Acceptance Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/authorisation-api'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: auth-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/authorisation-api
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Admin Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: admin
+          passed:
+            - Admin Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/admin'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: admin-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/admin
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Frontend Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: frontend
+          passed:
+            - Frontend Tests
+            - Frontend Acceptance Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        task: build-frontend-image
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/frontend'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: frontend-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/frontend
+          load_tag: staging
+
+      - <<: *build-deployable
+        task: build-raddb-image
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/raddb'
+          DOCKERFILE: src/Dockerfile.raddb
+          TAG: staging
+
+      - <<: *push-ecr
+        put: raddb-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/raddb
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Logging API Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: logging
+          passed:
+            - Logging API Tests
+            - Frontend Acceptance Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/logging-api'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: logging-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/logging-api
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Safe Restarter Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: safe-restarter
+          passed:
+            - Safe Restarter Tests
+        - get: deploy-tools
+        - get: runner
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/safe-restarter'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: safe-restarter-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/safe-restarter
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: User Signup API Staging Deploy
+    plan:
+      - aggregate:
+        - <<: *get-source
+          resource: user-signup
+          passed:
+            - User Signup API Tests
+        - get: deploy-tools
+        - get: runner
+        - get: wordlist-file
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/user-signup-api'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: user-signup-api-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/user-signup-api
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  ###### Production Deploys #######
+
+  # - name: Confirm Deploy to Authentication API Production
+  #   interruptible: true
+  #   plan:
+  #     - get: auth
+  #       passed:
+  #         - Authentication API Tests
+  #         - Frontend Acceptance Tests
+  #         - Authentication API Staging Deploy
+  #
+  # - name: Authentication API Production Deploy
+  #   plan:
+  #     - aggregate:
+  #       - <<: *get-source
+  #         resource: auth
+  #         passed: [Confirm Deploy to Authentication API Production]
+  #       - get: deploy-tools
+  #       - get: runner
+  #
+  #     - <<: *build-deployable
+  #       params:
+  #         <<: *build-deployable-params
+  #         REPOSITORY: 'govwifi/authorisation-api'
+  #         TAG: production
+  #
+  #     - <<: *push-ecr
+  #       put: auth-api-repo
+  #       params:
+  #         <<: *push-ecr-params
+  #         load_repository: govwifi/authorisation-api
+  #         load_tag: production
+  #
+  #     - <<: *deploy
+  #       params:
+  #         <<: *deploy-params
+  #         STAGE: production
+  #
+  # - name: Confirm Deploy to Admin Production
+  #   interruptible: true
+  #   plan:
+  #     - get: admin
+  #       passed:
+  #         - Admin Tests
+  #         - Admin Staging Deploy
+  #
+  # - name: Admin Production Deploy
+  #   plan:
+  #     - aggregate:
+  #       - <<: *get-source
+  #         resource: admin
+  #         passed: [Confirm Deploy to Admin Production]
+  #       - get: deploy-tools
+  #       - get: runner
+  #
+  #     - <<: *build-deployable
+  #       params:
+  #         <<: *build-deployable-params
+  #         REPOSITORY: 'govwifi/admin'
+  #         TAG: production
+  #
+  #     - <<: *push-ecr
+  #       put: admin-repo
+  #       params:
+  #         <<: *push-ecr-params
+  #         load_repository: govwifi/admin
+  #         load_tag: production
+  #
+  #     - <<: *deploy
+  #       params:
+  #         <<: *deploy-params
+  #         STAGE: production
+  #
+  # - name: Confirm Deploy to Frontend Production
+  #   interruptible: true
+  #   plan:
+  #     - get: frontend
+  #       passed:
+  #         - Frontend Tests
+  #         - Frontend Acceptance Tests
+  #         - Frontend Staging Deploy
+  #
+  # - name: Frontend Production Deploy
+  #   plan:
+  #     - aggregate:
+  #       - <<: *get-source
+  #         resource: frontend
+  #         passed: [Confirm Deploy to Frontend Production]
+  #       - get: deploy-tools
+  #       - get: runner
+  #
+  #     - <<: *build-deployable
+  #       params:
+  #         <<: *build-deployable-params
+  #         REPOSITORY: 'govwifi/frontend'
+  #         TAG: production
+  #
+  #     - <<: *push-ecr
+  #       put: frontend-repo
+  #       params:
+  #         <<: *push-ecr-params
+  #         load_repository: govwifi/frontend
+  #         load_tag: production
+  #
+  #     - <<: *build-deployable
+  #       task: build-raddb-image
+  #       params:
+  #         <<: *build-deployable-params
+  #         REPOSITORY: 'govwifi/raddb'
+  #         DOCKERFILE: src/Dockerfile.raddb
+  #         TAG: production
+  #
+  #     - <<: *push-ecr
+  #       put: raddb-repo
+  #       params:
+  #         <<: *push-ecr-params
+  #         load_repository: govwifi/raddb
+  #         load_tag: production
+  #
+  #     - <<: *deploy
+  #       params:
+  #         <<: *deploy-params
+  #         STAGE: production
+  #
+  # - name: Confirm Deploy to Logging API Production
+  #   interruptible: true
+  #   plan:
+  #     - get: logging
+  #       passed:
+  #         - Logging API Tests
+  #         - Frontend Acceptance Tests
+  #         - Logging API Staging Deploy
+  #
+  # - name: Logging API Production Deploy
+  #   plan:
+  #     - aggregate:
+  #       - <<: *get-source
+  #         resource: logging
+  #         passed: [Confirm Deploy to Logging API Production]
+  #       - get: deploy-tools
+  #       - get: runner
+  #
+  #     - <<: *build-deployable
+  #       params:
+  #         <<: *build-deployable-params
+  #         REPOSITORY: 'govwifi/logging-api'
+  #         TAG: production
+  #
+  #     - <<: *push-ecr
+  #       put: logging-api-repo
+  #       params:
+  #         <<: *push-ecr-params
+  #         load_repository: govwifi/logging-api
+  #         load_tag: production
+  #
+  #     - <<: *deploy
+  #       params:
+  #         <<: *deploy-params
+  #         STAGE: production
+  #
+  # - name: Confirm Deploy to Safe Restarter Production
+  #   interruptible: true
+  #   plan:
+  #     - get: safe-restarter
+  #       passed:
+  #         - Safe Restarter Tests
+  #         - Safe Restarter Staging Deploy
+  #
+  # - name: Safe Restarter Production Deploy
+  #   plan:
+  #     - aggregate:
+  #       - <<: *get-source
+  #         resource: safe-restarter
+  #         passed: [Confirm Deploy to Safe Restarter Production]
+  #       - get: deploy-tools
+  #       - get: runner
+  #
+  #     - <<: *build-deployable
+  #       params:
+  #         <<: *build-deployable-params
+  #         REPOSITORY: 'govwifi/safe-restarter'
+  #         TAG: production
+  #
+  #     - <<: *push-ecr
+  #       put: safe-restarter-repo
+  #       params:
+  #         <<: *push-ecr-params
+  #         load_repository: govwifi/safe-restarter
+  #         load_tag: production
+  #
+  #     - <<: *deploy
+  #       params:
+  #         <<: *deploy-params
+  #         STAGE: production
+  #
+  # - name: Confirm Deploy to User Signup API Production
+  #   interruptible: true
+  #   plan:
+  #     - get: user-signup
+  #       passed:
+  #         - User Signup API Tests
+  #         - User Signup API Staging Deploy
+  #
+  # - name: User Signup API Production Deploy
+  #   plan:
+  #     - aggregate:
+  #       - <<: *get-source
+  #         resource: user-signup
+  #         passed: [Confirm Deploy to User Signup API Production]
+  #       - get: deploy-tools
+  #       - get: runner
+  #       - get: wordlist-file
+  #
+  #     - <<: *build-deployable
+  #       params:
+  #         <<: *build-deployable-params
+  #         REPOSITORY: 'govwifi/user-signup-api'
+  #         TAG: production
+  #
+  #     - <<: *push-ecr
+  #       put: user-signup-api-repo
+  #       params:
+  #         <<: *push-ecr-params
+  #         load_repository: govwifi/user-signup-api
+  #         load_tag: production
+  #
+  #     - <<: *deploy
+  #       params:
+  #         <<: *deploy-params
+  #         STAGE: production
+
+resources:
+  # task runner
+  - name: runner
+    # See https://github.com/alphagov/govwifi-concourse-runner for a reference dockerfile
+    # readonly_private_ecr_repo_url is provided by the hosted Concourse
+    type: docker-image
+    source:
+      repository: "((readonly_private_ecr_repo_url))"
+      tag: concourse-runner-latest
+
+  # this pipeline
+  - name: deploy-pipeline
+    type: concourse-pipeline
+    source:
+      teams:
+        - name: govwifi
+          username: govwifi
+          password: ((readonly_local_user_password))
+
+  # sources
+  - name: deploy-tools
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-concourse-deploy-pipeline.git"
+      branch: master
+
+  - name: admin
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-admin.git"
+      branch: master
+
+  - name: auth
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-authentication-api.git"
+      branch: master
+
+  - name: logging
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-logging-api.git"
+      branch: master
+
+  - name: user-signup
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-user-signup-api.git"
+      branch: master
+
+  - name: frontend
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-frontend.git"
+      branch: master
+
+  - name: safe-restarter
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-safe-restarter.git"
+      branch: master
+
+  - name: acceptance-tests
+    type: git
+    source:
+      uri: "https://github.com/alphagov/govwifi-acceptance-tests.git"
+      branch: master
+
+  # Docker repositories
+  - name: admin-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/admin"
+      tag: latest
+      aws_access_key_id: ((staging-temp-deploy-access-key-id))
+      aws_secret_access_key: ((staging-temp-deploy-secret-access-key))
+
+  - name: auth-api-repo
+    type: docker-image
+    source:
+      repository: "((staging-temp-deploy-repository))/govwifi/authorisation-api"
+      tag: latest
+      aws_access_key_id: ((staging-temp-deploy-access-key-id))
+      aws_secret_access_key: ((staging-temp-deploy-secret-access-key))
+
+  - name: frontend-repo
+    type: docker-image
+    source:
+      repository: "((staging-temp-deploy-repository))/govwifi/frontend"
+      tag: latest
+      aws_access_key_id: ((staging-temp-deploy-access-key-id))
+      aws_secret_access_key: ((staging-temp-deploy-secret-access-key))
+
+  - name: raddb-repo
+    type: docker-image
+    source:
+      repository: "((staging-temp-deploy-repository))/govwifi/raddb"
+      tag: latest
+      aws_access_key_id: ((staging-temp-deploy-access-key-id))
+      aws_secret_access_key: ((staging-temp-deploy-secret-access-key))
+
+  - name: logging-api-repo
+    type: docker-image
+    source:
+      repository: "((staging-temp-deploy-repository))/govwifi/logging-api"
+      tag: latest
+      aws_access_key_id: ((staging-temp-deploy-access-key-id))
+      aws_secret_access_key: ((staging-temp-deploy-secret-access-key))
+
+  - name: safe-restarter-repo
+    type: docker-image
+    source:
+      repository: "((staging-temp-deploy-repository))/govwifi/safe-restarter"
+      tag: latest
+      aws_access_key_id: ((staging-temp-deploy-access-key-id))
+      aws_secret_access_key: ((staging-temp-deploy-secret-access-key))
+
+  - name: user-signup-api-repo
+    type: docker-image
+    source:
+      repository: "((staging-temp-deploy-repository))/govwifi/user-signup-api"
+      tag: latest
+      aws_access_key_id: ((staging-temp-deploy-access-key-id))
+      aws_secret_access_key: ((staging-temp-deploy-secret-access-key))
+
+  # common resources for caching
+  - name: mysql-image
+    type: registry-image
+    source:
+      repository: mysql
+      tag: '5.7'
+
+  - name: nginx-image
+    type: registry-image
+    source:
+      repository: nginx
+      tag: alpine
+
+  # Admin docker caching
+  - name: admin-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.6.2'
+
+  # Auth docker caching
+  - name: auth-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.5.3-alpine'
+
+  # Logging docker caching
+  - name: logging-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.6.1-alpine'
+
+  # User Signup docker caching
+  - name: user-signup-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.5.1-alpine'
+
+  # Frontend docker caching
+  - name: frontend-alpine-image
+    type: registry-image
+    source:
+      repository: alpine
+      tag: '3.8'
+
+  # Safe Restarter docker caching
+  - name: safe-restarter-ruby-image
+    type: registry-image
+    source:
+      repository: ruby
+      tag: '2.5.3-alpine3.9'
+
+  # S3 Resources
+  - name: wordlist-file
+    type: s3
+    source:
+      bucket: govwifi-wordlist
+      access_key_id: "((staging-temp-deploy-access-key-id))"
+      secret_access_key: "((staging-temp-deploy-secret-access-key))"
+      versioned_file: wordlist-short
+      region_name: eu-west-2
+
+resource_types:
+  - name: concourse-pipeline
+    type: docker-image
+    source:
+      repository: concourse/concourse-pipeline-resource
