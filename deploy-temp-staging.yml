@@ -748,7 +748,7 @@ resources:
   - name: admin-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/admin"
+      repository: "((staging-temp-deploy-repository))/govwifi/admin"
       tag: latest
       aws_access_key_id: ((staging-temp-deploy-access-key-id))
       aws_secret_access_key: ((staging-temp-deploy-secret-access-key))
