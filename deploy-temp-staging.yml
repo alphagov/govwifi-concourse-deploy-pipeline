@@ -43,7 +43,7 @@ x-tasks:
       STAGE:
       AWS_ACCESS_KEY_ID: "((staging-temp-deploy-access-key-id))"
       AWS_SECRET_ACCESS_KEY: "((staging-temp-deploy-secret-access-key))"
-      AWS_DEFAULT_REGION: "((staging-temp-deploy-region))"
+      AWS_DEFAULT_REGION: "((deploy-region))"
 
 x-get-aliases:
   source: &get-source
@@ -284,7 +284,7 @@ jobs:
       - <<: *deploy
         params:
           <<: *deploy-params
-          STAGE: staging
+          STAGE: staging-temp
 
   - name: Admin Staging Deploy
     plan:
@@ -312,7 +312,7 @@ jobs:
       - <<: *deploy
         params:
           <<: *deploy-params
-          STAGE: staging
+          STAGE: staging-temp
 
   - name: Frontend Staging Deploy
     plan:
@@ -357,7 +357,7 @@ jobs:
       - <<: *deploy
         params:
           <<: *deploy-params
-          STAGE: staging
+          STAGE: staging-temp
 
   - name: Logging API Staging Deploy
     plan:
@@ -386,7 +386,7 @@ jobs:
       - <<: *deploy
         params:
           <<: *deploy-params
-          STAGE: staging
+          STAGE: staging-temp
 
   - name: Safe Restarter Staging Deploy
     plan:
@@ -414,7 +414,7 @@ jobs:
       - <<: *deploy
         params:
           <<: *deploy-params
-          STAGE: staging
+          STAGE: staging-temp
 
   - name: User Signup API Staging Deploy
     plan:
@@ -443,7 +443,7 @@ jobs:
       - <<: *deploy
         params:
           <<: *deploy-params
-          STAGE: staging
+          STAGE: staging-temp
 
   ###### Production Deploys #######
 
