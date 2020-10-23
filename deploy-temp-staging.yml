@@ -860,7 +860,7 @@ resources:
   - name: wordlist-file
     type: s3
     source:
-      bucket: govwifi-wordlist
+      bucket: govwifi-staging-temp-wordlist
       access_key_id: "((staging-temp-deploy-access-key-id))"
       secret_access_key: "((staging-temp-deploy-secret-access-key))"
       versioned_file: wordlist-short
