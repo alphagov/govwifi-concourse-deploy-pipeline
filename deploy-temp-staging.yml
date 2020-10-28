@@ -24,7 +24,6 @@ x-tasks:
     # These are passed to the govwifi- builder-task container and used in this
     # script https://github.com/alphagov/govwifi-builder-task/blob/master/build
     params: &build-deployable-params
-      DOCKER_HUB_USERNAME_ENV: ((docker_hub_username))
       DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
       TAG:
 
