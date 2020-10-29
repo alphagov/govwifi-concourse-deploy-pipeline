@@ -22,6 +22,7 @@ x-tasks:
     # should output 'image/tag' based on "TAG"
     file: src/ci/tasks/build-deployable.yml
     params: &build-deployable-params
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
       TAG:
 
   push-ecr: &push-ecr
