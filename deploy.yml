@@ -22,6 +22,7 @@ x-tasks:
     # should output 'image/tag' based on "TAG"
     file: src/ci/tasks/build-deployable.yml
     params: &build-deployable-params
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
       TAG:
 
   push-ecr: &push-ecr
@@ -807,12 +808,16 @@ resources:
     source:
       repository: mysql
       tag: '5.7'
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
 
   - name: nginx-image
     type: registry-image
     source:
       repository: nginx
       tag: alpine
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
 
   # Admin docker caching
   - name: admin-ruby-image
@@ -820,6 +825,8 @@ resources:
     source:
       repository: ruby
       tag: '2.6.2'
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
   
   # Auth docker caching
   - name: auth-ruby-image
@@ -827,6 +834,8 @@ resources:
     source:
       repository: ruby
       tag: '2.5.3-alpine'
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
   
   # Logging docker caching
   - name: logging-ruby-image
@@ -834,6 +843,8 @@ resources:
     source:
       repository: ruby
       tag: '2.6.1-alpine'
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
   
   # User Signup docker caching
   - name: user-signup-ruby-image
@@ -841,6 +852,8 @@ resources:
     source:
       repository: ruby
       tag: '2.5.1-alpine'
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
   
   # Frontend docker caching
   - name: frontend-alpine-image
@@ -855,6 +868,8 @@ resources:
     source:
       repository: ruby
       tag: '2.5.3-alpine3.9'
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
 
   # S3 Resources
   - name: wordlist-file
