@@ -861,7 +861,9 @@ resources:
     source:
       repository: alpine
       tag: '3.8'
-  
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
+
   # Safe Restarter docker caching
   - name: safe-restarter-ruby-image
     type: registry-image
