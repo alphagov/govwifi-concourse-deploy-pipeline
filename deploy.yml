@@ -824,7 +824,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.6.2'
+      tag: '2.7.2'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
   
@@ -833,7 +833,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.5.3-alpine'
+      tag: '2.7.2-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
   
@@ -842,7 +842,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.6.1-alpine'
+      tag: '2.7.2-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
   
@@ -851,7 +851,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.5.1-alpine'
+      tag: '2.7.2-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
   
@@ -869,7 +869,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.5.3-alpine3.9'
+      tag: '2.7.2-alpine3.9'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
 
