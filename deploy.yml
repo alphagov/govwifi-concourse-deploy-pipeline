@@ -113,6 +113,12 @@ groups:
       - Safe Restarter Staging Deploy
       - Confirm Deploy to Safe Restarter Production
       - Safe Restarter Production Deploy
+  - name: Database Backup
+    jobs:
+      - Database Backup Tests
+      - Database Backup Staging Deploy
+      - Confirm Deploy to Database Backup Production
+      - Database Backup Production Deploy
   - name: All Tests
     jobs:
       - Admin Tests
@@ -255,6 +261,28 @@ jobs:
           resource: logging
           trigger: true
       - *test-and-lint
+
+  - name: Database Backup Tests
+    interruptible: true
+    plan:
+      - in_parallel:
+          steps:
+            - <<: *get-source
+              resource: database-backup
+            - get: runner
+            - <<: *docker-cache
+              get: docker-cache/python-image
+              resource: database-backup-image
+            - <<: *docker-cache
+              get: docker-cache/mysql-image
+              resource: mysql-image
+            - <<: *docker-cache
+              get: docker-cache/localstack-image
+              resource: localstack-image
+      - file: src/ci/tasks/test.yml
+        image: runner
+        privileged: true
+        task: test
 
   ###### Staging Deploys ######
 
@@ -454,6 +482,34 @@ jobs:
         params:
           <<: *push-ecr-params
           load_repository: govwifi/user-signup-api
+          load_tag: staging
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: staging
+
+  - name: Database Backup Staging Deploy
+    plan:
+      - aggregate:
+          - <<: *get-source
+            resource: database-backup
+            passed:
+              - Database Backup Tests
+          - get: deploy-tools
+          - get: runner
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/database-backup'
+          TAG: staging
+
+      - <<: *push-ecr
+        put: database-backup-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/database-backup
           load_tag: staging
 
       - <<: *deploy
@@ -674,7 +730,7 @@ jobs:
     interruptible: true
     plan:
       - get: user-signup
-        passed: 
+        passed:
           - User Signup API Tests
           - User Signup API Staging Deploy
 
@@ -699,6 +755,42 @@ jobs:
         params:
           <<: *push-ecr-params
           load_repository: govwifi/user-signup-api
+          load_tag: production
+
+      - <<: *deploy
+        params:
+          <<: *deploy-params
+          STAGE: production
+
+  - name: Confirm Deploy to Database Backup Production
+    interruptible: true
+    plan:
+      - get: database-backup
+        passed:
+          - Database Backup Tests
+          - Database Backup Staging Deploy
+
+  - name: Database Backup Production Deploy
+    plan:
+      - aggregate:
+          - <<: *get-source
+            resource: database-backup
+            passed:
+              - Confirm Deploy to Database Backup Production
+          - get: deploy-tools
+          - get: runner
+
+      - <<: *build-deployable
+        params:
+          <<: *build-deployable-params
+          REPOSITORY: 'govwifi/database-backup'
+          TAG: production
+
+      - <<: *push-ecr
+        put: database-backup-repo
+        params:
+          <<: *push-ecr-params
+          load_repository: govwifi/database-backup
           load_tag: production
 
       - <<: *deploy
@@ -774,6 +866,12 @@ resources:
       uri: "https://github.com/alphagov/govwifi-acceptance-tests.git"
       branch: master
 
+  - name: database-backup
+    type: git
+    source:
+      uri: https://github.com/alphagov/govwifi-database-backup.git
+      branch: add_concourse_ci
+
   # Docker repositories
   - name: admin-repo
     type: docker-image
@@ -839,6 +937,14 @@ resources:
       aws_access_key_id: ((deploy-access-key-id))
       aws_secret_access_key: ((deploy-secret-access-key))
 
+  - name: database-backup-repo
+    type: docker-image
+    source:
+      repository: "((deploy-repository))/govwifi/database-backup"
+      tag: latest
+      aws_access_key_id: ((deploy-access-key-id))
+      aws_secret_access_key: ((deploy-secret-access-key))
+
   # common resources for caching
   - name: mysql-image
     type: registry-image
@@ -861,7 +967,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.7.2'
+      tag: '2.6.2'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
   
@@ -870,7 +976,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.7.2-alpine'
+      tag: '2.5.3-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
   
@@ -879,7 +985,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.7.2-alpine'
+      tag: '2.6.1-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
   
@@ -888,7 +994,7 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.7.2-alpine'
+      tag: '2.5.1-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
   
@@ -906,9 +1012,25 @@ resources:
     type: registry-image
     source:
       repository: ruby
-      tag: '2.7.2-alpine3.9'
+      tag: '2.5.3-alpine3.9'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
+
+  # Database backup docker caching
+  - name: database-backup-image
+    type: registry-image
+    source:
+      repository: python
+      tag: '3-alpine'
+      username: ((docker_hub_username))
+      password: ((docker_hub_authtoken))
+
+  # Localstack docker caching
+  - name: localstack-image
+    type: registry-image
+    source:
+      repository: localstack/localstack
+      tag: latest
 
   # S3 Resources
   - name: wordlist-file
