@@ -161,16 +161,11 @@ groups:
 
 jobs:
   - name: self-update
-    serial: true
     plan:
-    - get: deploy-tools
-      trigger: true
-    - put: deploy-pipeline
-      params:
-        pipelines:
-          - name: deploy
-            team: govwifi
-            config_file: deploy-tools/deploy.yml
+      - get: deploy-tools
+        trigger: true
+      - set_pipeline: deploy-tools
+        file: deploy-tools/deploy.yml
 
   ###### Tests + Lints ######
   - name: Admin Tests
@@ -807,15 +802,6 @@ resources:
     source:
       repository: "((readonly_private_ecr_repo_url))"
       tag: concourse-runner-latest
-
-  # this pipeline
-  - name: deploy-pipeline
-    type: concourse-pipeline
-    source:
-      teams:
-        - name: govwifi
-          username: govwifi
-          password: ((readonly_local_user_password))
 
   # sources
   - name: deploy-tools
