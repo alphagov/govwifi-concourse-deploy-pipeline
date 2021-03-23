@@ -5,7 +5,7 @@ x-tasks:
         privileged: true
         image: runner
         file: src/ci/tasks/pre-build.yml
-      - aggregate:
+      - in_parallel:
         - task: lint
           privileged: true
           image: runner
@@ -171,7 +171,7 @@ jobs:
   - name: Admin Tests
     interruptible: true
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: admin
         - get: runner
@@ -184,7 +184,7 @@ jobs:
   - name: Authentication API Tests
     interruptible: true
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: auth
         - get: runner
@@ -196,7 +196,7 @@ jobs:
   - name: Logging API Tests
     interruptible: true
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: logging
         - get: runner
@@ -208,7 +208,7 @@ jobs:
   - name: User Signup API Tests
     interruptible: true
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: user-signup
         - get: runner
@@ -220,7 +220,7 @@ jobs:
   - name: Frontend Tests
     interruptible: true
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: frontend
         - get: runner
@@ -231,7 +231,7 @@ jobs:
   - name: Safe Restarter Tests
     interruptible: true
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: safe-restarter
         - get: runner
@@ -242,7 +242,7 @@ jobs:
   - name: Frontend Acceptance Tests
     interruptible: true
     plan:
-      - aggregate:
+      - in_parallel:
         - get: runner
         - <<: *get-source
           resource: acceptance-tests
@@ -283,7 +283,7 @@ jobs:
 
   - name: Authentication API Staging Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: auth
           passed:
@@ -312,7 +312,7 @@ jobs:
 
   - name: Admin Staging Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: admin
           passed:
@@ -340,7 +340,7 @@ jobs:
 
   - name: Frontend Staging Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: frontend
           passed:
@@ -400,7 +400,7 @@ jobs:
 
   - name: Logging API Staging Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: logging
           passed:
@@ -429,7 +429,7 @@ jobs:
 
   - name: Safe Restarter Staging Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: safe-restarter
           passed:
@@ -457,7 +457,7 @@ jobs:
 
   - name: User Signup API Staging Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: user-signup
           passed:
@@ -486,7 +486,7 @@ jobs:
 
   - name: Database Backup Staging Deploy
     plan:
-      - aggregate:
+      - in_parallel:
           - <<: *get-source
             resource: database-backup
             passed:
@@ -525,7 +525,7 @@ jobs:
 
   - name: Authentication API Production Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: auth
           passed: [Confirm Deploy to Authentication API Production]
@@ -560,7 +560,7 @@ jobs:
 
   - name: Admin Production Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: admin
           passed: [Confirm Deploy to Admin Production]
@@ -596,7 +596,7 @@ jobs:
 
   - name: Frontend Production Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: frontend
           passed: [Confirm Deploy to Frontend Production]
@@ -661,7 +661,7 @@ jobs:
 
   - name: Logging API Production Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: logging
           passed: [Confirm Deploy to Logging API Production]
@@ -696,7 +696,7 @@ jobs:
 
   - name: Safe Restarter Production Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: safe-restarter
           passed: [Confirm Deploy to Safe Restarter Production]
@@ -731,7 +731,7 @@ jobs:
 
   - name: User Signup API Production Deploy
     plan:
-      - aggregate:
+      - in_parallel:
         - <<: *get-source
           resource: user-signup
           passed: [Confirm Deploy to User Signup API Production]
@@ -767,7 +767,7 @@ jobs:
 
   - name: Database Backup Production Deploy
     plan:
-      - aggregate:
+      - in_parallel:
           - <<: *get-source
             resource: database-backup
             passed:
