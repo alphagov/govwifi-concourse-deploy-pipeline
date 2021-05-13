@@ -161,6 +161,7 @@ groups:
 
 jobs:
   - name: self-update
+    max-in-flight: 1
     plan:
       - get: deploy-tools
         trigger: true
@@ -169,6 +170,7 @@ jobs:
 
   ###### Tests + Lints ######
   - name: Admin Tests
+    max-in-flight: 1
     interruptible: true
     plan:
       - in_parallel:
@@ -182,6 +184,7 @@ jobs:
       - *test-and-lint
 
   - name: Authentication API Tests
+    max-in-flight: 1
     interruptible: true
     plan:
       - in_parallel:
@@ -194,6 +197,7 @@ jobs:
       - *test-and-lint
   
   - name: Logging API Tests
+    max-in-flight: 1
     interruptible: true
     plan:
       - in_parallel:
@@ -206,6 +210,7 @@ jobs:
       - *test-and-lint
 
   - name: User Signup API Tests
+    max-in-flight: 1
     interruptible: true
     plan:
       - in_parallel:
@@ -218,6 +223,7 @@ jobs:
       - *test-and-lint
 
   - name: Frontend Tests
+    max-in-flight: 1
     interruptible: true
     plan:
       - in_parallel:
@@ -229,6 +235,7 @@ jobs:
       - *test-and-lint
 
   - name: Safe Restarter Tests
+    max-in-flight: 1
     interruptible: true
     plan:
       - in_parallel:
@@ -240,6 +247,7 @@ jobs:
       - *test-and-lint
 
   - name: Frontend Acceptance Tests
+    max-in-flight: 1
     interruptible: true
     plan:
       - in_parallel:
@@ -258,6 +266,7 @@ jobs:
       - *test-and-lint
 
   - name: Database Backup Tests
+    max-in-flight: 1
     interruptible: true
     plan:
       - in_parallel:
@@ -282,6 +291,7 @@ jobs:
   ###### Staging Deploys ######
 
   - name: Authentication API Staging Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -311,6 +321,7 @@ jobs:
           STAGE: staging
 
   - name: Admin Staging Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -339,6 +350,7 @@ jobs:
           STAGE: staging
 
   - name: Frontend Staging Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -399,6 +411,7 @@ jobs:
           STAGE: staging
 
   - name: Logging API Staging Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -428,6 +441,7 @@ jobs:
           STAGE: staging
 
   - name: Safe Restarter Staging Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -456,6 +470,7 @@ jobs:
           STAGE: staging
 
   - name: User Signup API Staging Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -485,6 +500,7 @@ jobs:
           STAGE: staging
 
   - name: Database Backup Staging Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
           - <<: *get-source
@@ -515,6 +531,7 @@ jobs:
   ###### Production Deploys #######
 
   - name: Confirm Deploy to Authentication API Production
+    max-in-flight: 1
     interruptible: true
     plan:
       - get: auth
@@ -551,6 +568,7 @@ jobs:
           STAGE: production
 
   - name: Confirm Deploy to Admin Production
+    max-in-flight: 1
     interruptible: true
     plan:
       - get: admin
@@ -559,6 +577,7 @@ jobs:
           - Admin Staging Deploy
 
   - name: Admin Production Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -586,6 +605,7 @@ jobs:
           STAGE: production
 
   - name: Confirm Deploy to Frontend Production
+    max-in-flight: 1
     interruptible: true
     plan:
       - get: frontend
@@ -651,6 +671,7 @@ jobs:
           STAGE: production
 
   - name: Confirm Deploy to Logging API Production
+    max-in-flight: 1
     interruptible: true
     plan:
       - get: logging
@@ -660,6 +681,7 @@ jobs:
           - Logging API Staging Deploy
 
   - name: Logging API Production Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -687,6 +709,7 @@ jobs:
           STAGE: production
 
   - name: Confirm Deploy to Safe Restarter Production
+    max-in-flight: 1
     interruptible: true
     plan:
       - get: safe-restarter
@@ -695,6 +718,7 @@ jobs:
           - Safe Restarter Staging Deploy
 
   - name: Safe Restarter Production Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -722,6 +746,7 @@ jobs:
           STAGE: production
 
   - name: Confirm Deploy to User Signup API Production
+    max-in-flight: 1
     interruptible: true
     plan:
       - get: user-signup
@@ -730,6 +755,7 @@ jobs:
           - User Signup API Staging Deploy
 
   - name: User Signup API Production Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
         - <<: *get-source
@@ -758,6 +784,7 @@ jobs:
           STAGE: production
 
   - name: Confirm Deploy to Database Backup Production
+    max-in-flight: 1
     interruptible: true
     plan:
       - get: database-backup
@@ -766,6 +793,7 @@ jobs:
           - Database Backup Staging Deploy
 
   - name: Database Backup Production Deploy
+    max-in-flight: 1
     plan:
       - in_parallel:
           - <<: *get-source
