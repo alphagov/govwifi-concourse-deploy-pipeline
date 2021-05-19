@@ -1,0 +1,1153 @@
+groups:
+- jobs:
+  - Admin Tests
+  - Admin Staging Deploy
+  - Confirm Deploy to Admin Production
+  - Admin Production Deploy
+  name: Admin
+- jobs:
+  - Authentication API Tests
+  - Frontend Acceptance Tests
+  - Authentication API Staging Deploy
+  - Confirm Deploy to Authentication API Production
+  - Authentication API Production Deploy
+  name: Authentication API
+- jobs:
+  - Logging API Tests
+  - Frontend Acceptance Tests
+  - Logging API Staging Deploy
+  - Confirm Deploy to Logging API Production
+  - Logging API Production Deploy
+  name: Logging API
+- jobs:
+  - User Signup API Tests
+  - User Signup API Staging Deploy
+  - Confirm Deploy to User Signup API Production
+  - User Signup API Production Deploy
+  name: User Signup API
+- jobs:
+  - Frontend Tests
+  - Frontend Acceptance Tests
+  - Frontend Staging Deploy
+  - Confirm Deploy to Frontend Production
+  - Frontend Production Deploy
+  name: Frontend
+- jobs:
+  - Safe Restarter Tests
+  - Safe Restarter Staging Deploy
+  - Confirm Deploy to Safe Restarter Production
+  - Safe Restarter Production Deploy
+  name: Safe Restarter
+- jobs:
+  - Database Backup Tests
+  - Database Backup Staging Deploy
+  - Confirm Deploy to Database Backup Production
+  - Database Backup Production Deploy
+  name: Database Backup
+- jobs:
+  - Admin Tests
+  - Authentication API Tests
+  - Logging API Tests
+  - User Signup API Tests
+  - Frontend Tests
+  - Safe Restarter Tests
+  - Frontend Acceptance Tests
+  name: All Tests
+- jobs:
+  - Admin Staging Deploy
+  - Authentication API Staging Deploy
+  - Logging API Staging Deploy
+  - User Signup API Staging Deploy
+  - Frontend Staging Deploy
+  - Safe Restarter Staging Deploy
+  name: All Staging Deploys
+- jobs:
+  - Confirm Deploy to Admin Production
+  - Admin Production Deploy
+  - Confirm Deploy to Authentication API Production
+  - Authentication API Production Deploy
+  - Confirm Deploy to Logging API Production
+  - Logging API Production Deploy
+  - Confirm Deploy to User Signup API Production
+  - User Signup API Production Deploy
+  - Confirm Deploy to Frontend Production
+  - Frontend Production Deploy
+  - Confirm Deploy to Safe Restarter Production
+  - Safe Restarter Production Deploy
+  name: All Production Deploys
+- jobs:
+  - self-update
+  name: self-update
+jobs:
+- max_in_flight: 1
+  name: self-update
+  plan:
+  - get: deploy-tools
+    trigger: true
+  - file: deploy-tools/deploy.yml
+    set_pipeline: deploy-tools
+- interruptible: true
+  max_in_flight: 1
+  name: Admin Tests
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        resource: admin
+        trigger: true
+      - get: runner
+      - get: docker-cache/ruby-image
+        params:
+          format: oci
+        resource: admin-ruby-image
+      - get: docker-cache/mysql-image
+        params:
+          format: oci
+        resource: mysql-image
+      - get: docker-cache/nginx-image
+        params:
+          format: oci
+        resource: nginx-image
+  - do:
+    - file: src/ci/tasks/pre-build.yml
+      image: runner
+      privileged: true
+      task: pre-build
+    - in_parallel:
+        steps:
+        - file: src/ci/tasks/lint.yml
+          image: runner
+          privileged: true
+          task: lint
+        - file: src/ci/tasks/test.yml
+          image: runner
+          privileged: true
+          task: test
+- interruptible: true
+  max_in_flight: 1
+  name: Authentication API Tests
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        resource: auth
+        trigger: true
+      - get: runner
+      - get: docker-cache/ruby-image
+        params:
+          format: oci
+        resource: auth-ruby-image
+      - get: docker-cache/mysql-image
+        params:
+          format: oci
+        resource: mysql-image
+  - do:
+    - file: src/ci/tasks/pre-build.yml
+      image: runner
+      privileged: true
+      task: pre-build
+    - in_parallel:
+        steps:
+        - file: src/ci/tasks/lint.yml
+          image: runner
+          privileged: true
+          task: lint
+        - file: src/ci/tasks/test.yml
+          image: runner
+          privileged: true
+          task: test
+- interruptible: true
+  max_in_flight: 1
+  name: Logging API Tests
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        resource: logging
+        trigger: true
+      - get: runner
+      - get: docker-cache/ruby-image
+        params:
+          format: oci
+        resource: logging-ruby-image
+      - get: docker-cache/mysql-image
+        params:
+          format: oci
+        resource: mysql-image
+  - do:
+    - file: src/ci/tasks/pre-build.yml
+      image: runner
+      privileged: true
+      task: pre-build
+    - in_parallel:
+        steps:
+        - file: src/ci/tasks/lint.yml
+          image: runner
+          privileged: true
+          task: lint
+        - file: src/ci/tasks/test.yml
+          image: runner
+          privileged: true
+          task: test
+- interruptible: true
+  max_in_flight: 1
+  name: User Signup API Tests
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        resource: user-signup
+        trigger: true
+      - get: runner
+      - get: docker-cache/ruby-image
+        params:
+          format: oci
+        resource: user-signup-ruby-image
+      - get: docker-cache/mysql-image
+        params:
+          format: oci
+        resource: mysql-image
+  - do:
+    - file: src/ci/tasks/pre-build.yml
+      image: runner
+      privileged: true
+      task: pre-build
+    - in_parallel:
+        steps:
+        - file: src/ci/tasks/lint.yml
+          image: runner
+          privileged: true
+          task: lint
+        - file: src/ci/tasks/test.yml
+          image: runner
+          privileged: true
+          task: test
+- interruptible: true
+  max_in_flight: 1
+  name: Frontend Tests
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        resource: frontend
+        trigger: true
+      - get: runner
+      - get: docker-cache/alpine-image
+        params:
+          format: oci
+        resource: frontend-alpine-image
+  - do:
+    - file: src/ci/tasks/pre-build.yml
+      image: runner
+      privileged: true
+      task: pre-build
+    - in_parallel:
+        steps:
+        - file: src/ci/tasks/lint.yml
+          image: runner
+          privileged: true
+          task: lint
+        - file: src/ci/tasks/test.yml
+          image: runner
+          privileged: true
+          task: test
+- interruptible: true
+  max_in_flight: 1
+  name: Safe Restarter Tests
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        resource: safe-restarter
+        trigger: true
+      - get: runner
+      - get: docker-cache/ruby-image
+        params:
+          format: oci
+        resource: safe-restarter-ruby-image
+  - do:
+    - file: src/ci/tasks/pre-build.yml
+      image: runner
+      privileged: true
+      task: pre-build
+    - in_parallel:
+        steps:
+        - file: src/ci/tasks/lint.yml
+          image: runner
+          privileged: true
+          task: lint
+        - file: src/ci/tasks/test.yml
+          image: runner
+          privileged: true
+          task: test
+- interruptible: true
+  max_in_flight: 1
+  name: Frontend Acceptance Tests
+  plan:
+  - in_parallel:
+      steps:
+      - get: runner
+      - get: src
+        resource: acceptance-tests
+        trigger: true
+      - get: frontend
+        resource: frontend
+        trigger: true
+      - get: authentication-api
+        resource: auth
+        trigger: true
+      - get: logging-api
+        resource: logging
+        trigger: true
+  - do:
+    - file: src/ci/tasks/pre-build.yml
+      image: runner
+      privileged: true
+      task: pre-build
+    - in_parallel:
+        steps:
+        - file: src/ci/tasks/lint.yml
+          image: runner
+          privileged: true
+          task: lint
+        - file: src/ci/tasks/test.yml
+          image: runner
+          privileged: true
+          task: test
+- interruptible: true
+  max_in_flight: 1
+  name: Database Backup Tests
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        resource: database-backup
+        trigger: true
+      - get: runner
+      - get: docker-cache/python-image
+        params:
+          format: oci
+        resource: database-backup-image
+      - get: docker-cache/mysql-image
+        params:
+          format: oci
+        resource: mysql-image
+      - get: docker-cache/localstack-image
+        params:
+          format: oci
+        resource: localstack-image
+  - file: src/ci/tasks/test.yml
+    image: runner
+    privileged: true
+    task: test
+- max_in_flight: 1
+  name: Authentication API Staging Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Authentication API Tests
+        - Frontend Acceptance Tests
+        resource: auth
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/authorisation-api
+      TAG: staging
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/authorisation-api
+      load_tag: staging
+      tag_file: image/tag
+    put: auth-api-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: staging
+    task: deploy
+- max_in_flight: 1
+  name: Admin Staging Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Admin Tests
+        resource: admin
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/admin
+      TAG: staging
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/admin
+      load_tag: staging
+      tag_file: image/tag
+    put: admin-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: staging
+    task: deploy
+- max_in_flight: 1
+  name: Frontend Staging Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Frontend Tests
+        - Frontend Acceptance Tests
+        resource: frontend
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      DOCKERFILE: src/Dockerfile.base
+      REPOSITORY: govwifi/frontend-base
+      TAG: staging
+    privileged: true
+    task: build-frontend-base-image
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/frontend-base
+      load_tag: staging
+      tag_file: image/tag
+    put: frontend-base-repo
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/frontend
+      TAG: staging
+    privileged: true
+    task: build-frontend-image
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/frontend
+      load_tag: staging
+      tag_file: image/tag
+    put: frontend-repo
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      DOCKERFILE: src/Dockerfile.raddb
+      REPOSITORY: govwifi/raddb
+      TAG: staging
+    privileged: true
+    task: build-raddb-image
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/raddb
+      load_tag: staging
+      tag_file: image/tag
+    put: raddb-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: staging
+    task: deploy
+- max_in_flight: 1
+  name: Logging API Staging Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Logging API Tests
+        - Frontend Acceptance Tests
+        resource: logging
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/logging-api
+      TAG: staging
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/logging-api
+      load_tag: staging
+      tag_file: image/tag
+    put: logging-api-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: staging
+    task: deploy
+- max_in_flight: 1
+  name: Safe Restarter Staging Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Safe Restarter Tests
+        resource: safe-restarter
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/safe-restarter
+      TAG: staging
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/safe-restarter
+      load_tag: staging
+      tag_file: image/tag
+    put: safe-restarter-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: staging
+    task: deploy
+- max_in_flight: 1
+  name: User Signup API Staging Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - User Signup API Tests
+        resource: user-signup
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+      - get: wordlist-file
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/user-signup-api
+      TAG: staging
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/user-signup-api
+      load_tag: staging
+      tag_file: image/tag
+    put: user-signup-api-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: staging
+    task: deploy
+- max_in_flight: 1
+  name: Database Backup Staging Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Database Backup Tests
+        resource: database-backup
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/database-backup
+      TAG: staging
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/database-backup
+      load_tag: staging
+      tag_file: image/tag
+    put: database-backup-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: staging
+    task: deploy
+- interruptible: true
+  max_in_flight: 1
+  name: Confirm Deploy to Authentication API Production
+  plan:
+  - get: auth
+    passed:
+    - Authentication API Tests
+    - Frontend Acceptance Tests
+    - Authentication API Staging Deploy
+- name: Authentication API Production Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Confirm Deploy to Authentication API Production
+        resource: auth
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/authorisation-api
+      TAG: production
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/authorisation-api
+      load_tag: production
+      tag_file: image/tag
+    put: auth-api-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: production
+    task: deploy
+- interruptible: true
+  max_in_flight: 1
+  name: Confirm Deploy to Admin Production
+  plan:
+  - get: admin
+    passed:
+    - Admin Tests
+    - Admin Staging Deploy
+- max_in_flight: 1
+  name: Admin Production Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Confirm Deploy to Admin Production
+        resource: admin
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/admin
+      TAG: production
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/admin
+      load_tag: production
+      tag_file: image/tag
+    put: admin-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: production
+    task: deploy
+- interruptible: true
+  max_in_flight: 1
+  name: Confirm Deploy to Frontend Production
+  plan:
+  - get: frontend
+    passed:
+    - Frontend Tests
+    - Frontend Acceptance Tests
+    - Frontend Staging Deploy
+- name: Frontend Production Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Confirm Deploy to Frontend Production
+        resource: frontend
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      DOCKERFILE: src/Dockerfile.base
+      REPOSITORY: govwifi/frontend-base
+      TAG: production
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/frontend-base
+      load_tag: production
+      tag_file: image/tag
+    put: frontend-base-repo
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/frontend
+      TAG: production
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/frontend
+      load_tag: production
+      tag_file: image/tag
+    put: frontend-repo
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      DOCKERFILE: src/Dockerfile.raddb
+      REPOSITORY: govwifi/raddb
+      TAG: production
+    privileged: true
+    task: build-raddb-image
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/raddb
+      load_tag: production
+      tag_file: image/tag
+    put: raddb-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: production
+    task: deploy
+- interruptible: true
+  max_in_flight: 1
+  name: Confirm Deploy to Logging API Production
+  plan:
+  - get: logging
+    passed:
+    - Logging API Tests
+    - Frontend Acceptance Tests
+    - Logging API Staging Deploy
+- max_in_flight: 1
+  name: Logging API Production Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Confirm Deploy to Logging API Production
+        resource: logging
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/logging-api
+      TAG: production
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/logging-api
+      load_tag: production
+      tag_file: image/tag
+    put: logging-api-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: production
+    task: deploy
+- interruptible: true
+  max_in_flight: 1
+  name: Confirm Deploy to Safe Restarter Production
+  plan:
+  - get: safe-restarter
+    passed:
+    - Safe Restarter Tests
+    - Safe Restarter Staging Deploy
+- max_in_flight: 1
+  name: Safe Restarter Production Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Confirm Deploy to Safe Restarter Production
+        resource: safe-restarter
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/safe-restarter
+      TAG: production
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/safe-restarter
+      load_tag: production
+      tag_file: image/tag
+    put: safe-restarter-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: production
+    task: deploy
+- interruptible: true
+  max_in_flight: 1
+  name: Confirm Deploy to User Signup API Production
+  plan:
+  - get: user-signup
+    passed:
+    - User Signup API Tests
+    - User Signup API Staging Deploy
+- max_in_flight: 1
+  name: User Signup API Production Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Confirm Deploy to User Signup API Production
+        resource: user-signup
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+      - get: wordlist-file
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/user-signup-api
+      TAG: production
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/user-signup-api
+      load_tag: production
+      tag_file: image/tag
+    put: user-signup-api-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: production
+    task: deploy
+- interruptible: true
+  max_in_flight: 1
+  name: Confirm Deploy to Database Backup Production
+  plan:
+  - get: database-backup
+    passed:
+    - Database Backup Tests
+    - Database Backup Staging Deploy
+- max_in_flight: 1
+  name: Database Backup Production Deploy
+  plan:
+  - in_parallel:
+      steps:
+      - get: src
+        passed:
+        - Confirm Deploy to Database Backup Production
+        resource: database-backup
+        trigger: true
+      - get: deploy-tools
+      - get: runner
+  - file: src/ci/tasks/build-deployable.yml
+    params:
+      DOCKER_HUB_AUTHTOKEN_ENV: ((docker_hub_authtoken))
+      REPOSITORY: govwifi/database-backup
+      TAG: production
+    privileged: true
+    task: build-deployable
+  - get_params:
+      skip_download: true
+    params:
+      load_file: image/image.tar
+      load_repository: govwifi/database-backup
+      load_tag: production
+      tag_file: image/tag
+    put: database-backup-repo
+  - file: src/ci/tasks/deploy.yml
+    image: runner
+    params:
+      AWS_ACCESS_KEY_ID: ((deploy-access-key-id))
+      AWS_DEFAULT_REGION: ((deploy-region))
+      AWS_SECRET_ACCESS_KEY: ((deploy-secret-access-key))
+      STAGE: production
+    task: deploy
+resource_types:
+- name: concourse-pipeline
+  source:
+    repository: concourse/concourse-pipeline-resource
+  type: docker-image
+resources:
+- name: acceptance-tests
+  source:
+    branch: master
+    uri: https://github.com/alphagov/govwifi-acceptance-tests.git
+  type: git
+- name: admin
+  source:
+    branch: master
+    uri: https://github.com/alphagov/govwifi-admin.git
+  type: git
+- name: admin-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/admin
+    tag: latest
+  type: docker-image
+- name: admin-ruby-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: ruby
+    tag: 2.6.2
+    username: ((docker_hub_username))
+  type: registry-image
+- name: auth
+  source:
+    branch: master
+    uri: https://github.com/alphagov/govwifi-authentication-api.git
+  type: git
+- name: auth-api-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/authorisation-api
+    tag: latest
+  type: docker-image
+- name: auth-ruby-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: ruby
+    tag: 2.5.3-alpine
+    username: ((docker_hub_username))
+  type: registry-image
+- name: database-backup
+  source:
+    branch: add_concourse_ci
+    uri: https://github.com/alphagov/govwifi-database-backup.git
+  type: git
+- name: database-backup-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: python
+    tag: 3-alpine
+    username: ((docker_hub_username))
+  type: registry-image
+- name: database-backup-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/database-backup
+    tag: latest
+  type: docker-image
+- name: deploy-tools
+  source:
+    branch: master
+    uri: https://github.com/alphagov/govwifi-concourse-deploy-pipeline.git
+  type: git
+- name: frontend
+  source:
+    branch: master
+    uri: https://github.com/alphagov/govwifi-frontend.git
+  type: git
+- name: frontend-alpine-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: alpine
+    tag: "3.8"
+    username: ((docker_hub_username))
+  type: registry-image
+- name: frontend-base-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/frontend-base
+    tag: latest
+  type: docker-image
+- name: frontend-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/frontend
+    tag: latest
+  type: docker-image
+- name: localstack-image
+  source:
+    repository: localstack/localstack
+    tag: latest
+  type: registry-image
+- name: logging
+  source:
+    branch: master
+    uri: https://github.com/alphagov/govwifi-logging-api.git
+  type: git
+- name: logging-api-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/logging-api
+    tag: latest
+  type: docker-image
+- name: logging-ruby-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: ruby
+    tag: 2.6.1-alpine
+    username: ((docker_hub_username))
+  type: registry-image
+- name: mysql-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: mysql
+    tag: "5.7"
+    username: ((docker_hub_username))
+  type: registry-image
+- name: nginx-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: nginx
+    tag: alpine
+    username: ((docker_hub_username))
+  type: registry-image
+- name: raddb-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/raddb
+    tag: latest
+  type: docker-image
+- name: runner
+  source:
+    repository: ((readonly_private_ecr_repo_url))
+    tag: concourse-runner-latest
+  type: docker-image
+- name: safe-restarter
+  source:
+    branch: master
+    uri: https://github.com/alphagov/govwifi-safe-restarter.git
+  type: git
+- name: safe-restarter-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/safe-restarter
+    tag: latest
+  type: docker-image
+- name: safe-restarter-ruby-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: ruby
+    tag: 2.5.3-alpine3.9
+    username: ((docker_hub_username))
+  type: registry-image
+- name: user-signup
+  source:
+    branch: master
+    uri: https://github.com/alphagov/govwifi-user-signup-api.git
+  type: git
+- name: user-signup-api-repo
+  source:
+    aws_access_key_id: ((deploy-access-key-id))
+    aws_secret_access_key: ((deploy-secret-access-key))
+    repository: ((deploy-repository))/govwifi/user-signup-api
+    tag: latest
+  type: docker-image
+- name: user-signup-ruby-image
+  source:
+    password: ((docker_hub_authtoken))
+    repository: ruby
+    tag: 2.5.1-alpine
+    username: ((docker_hub_username))
+  type: registry-image
+- name: wordlist-file
+  source:
+    access_key_id: ((deploy-access-key-id))
+    bucket: govwifi-wordlist
+    region_name: eu-west-2
+    secret_access_key: ((deploy-secret-access-key))
+    versioned_file: wordlist-short
+  type: s3
