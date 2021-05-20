@@ -884,7 +884,7 @@ resources:
     type: git
     source:
       uri: https://github.com/alphagov/govwifi-database-backup.git
-      branch: add_concourse_ci
+      branch: master
 
   # Docker repositories
   - name: admin-repo
