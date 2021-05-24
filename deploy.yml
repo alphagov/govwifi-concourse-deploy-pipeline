@@ -165,7 +165,7 @@ jobs:
     plan:
       - get: deploy-tools
         trigger: true
-      - set_pipeline: deploy-tools
+      - set_pipeline: self
         file: deploy-tools/deploy.yml
 
   ###### Tests + Lints ######
