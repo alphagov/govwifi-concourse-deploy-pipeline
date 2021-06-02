@@ -31,7 +31,7 @@ function get_launch_type() {
         --query 'services[0].launchType'
 }
 
-function get_plaform_version() {
+function get_platform_version() {
   local cluster_name="${1}"
   local service_name="${2}"
 
