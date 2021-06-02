@@ -31,6 +31,17 @@ function get_launch_type() {
         --query 'services[0].launchType'
 }
 
+function get_plaform_version() {
+  local cluster_name="${1}"
+  local service_name="${2}"
+
+  aws ecs describe-services \
+        --cluster "${cluster_name}" \
+        --service "${service_name}" \
+        --output text \
+        --query 'services[0].platformVersion'
+}
+
 function run_task_with_command() {
   local cluster_name="${1}"
   local service_name="${2}"
@@ -41,11 +52,13 @@ function run_task_with_command() {
 
   network_config="$(get_network_config "${cluster_name}" "${service_name}")"
   launch_type="$(get_launch_type "${cluster_name}" "${service_name}")"
+  platform_version="$(get_platform_version "${cluster_name}" "${service_name}")"
 
   aws ecs run-task \
         --cluster "${cluster_name}" \
         --task-definition "${task_definition}" \
         --launch-type "${launch_type}" \
+        --platform-version "${platform_version}" \
         --network-configuration "${network_config}" \
         --count 1 \
         --override "$(override_command_structure "${docker_service_name}" "${command}")"
