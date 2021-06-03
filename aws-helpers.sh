@@ -58,7 +58,6 @@ function run_task_with_command() {
         --cluster "${cluster_name}" \
         --task-definition "${task_definition}" \
         --launch-type "${launch_type}" \
-        --platform-version "${platform_version}" \
         --network-configuration "${network_config}" \
         --count 1 \
         --override "$(override_command_structure "${docker_service_name}" "${command}")"
