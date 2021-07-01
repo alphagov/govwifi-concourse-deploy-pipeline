@@ -165,7 +165,7 @@ jobs:
     plan:
       - get: deploy-tools
         trigger: true
-      - set_pipeline: self
+      - set_pipeline: deploy
         file: deploy-tools/deploy.yml
 
   ###### Tests + Lints ######
@@ -195,7 +195,7 @@ jobs:
           resource: auth-ruby-image
         - *docker-cache-mysql
       - *test-and-lint
-  
+
   - name: Logging API Tests
     max_in_flight: 1
     interruptible: true
@@ -303,7 +303,7 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/authorisation-api'
           TAG: staging
@@ -332,7 +332,7 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/admin'
           TAG: staging
@@ -363,7 +363,7 @@ jobs:
 
       - <<: *build-deployable
         task: build-frontend-base-image
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/frontend-base'
           DOCKERFILE: src/Dockerfile.base
@@ -423,11 +423,11 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/logging-api'
           TAG: staging
-      
+
       - <<: *push-ecr
         put: logging-api-repo
         params:
@@ -452,7 +452,7 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/safe-restarter'
           TAG: staging
@@ -482,11 +482,11 @@ jobs:
         - get: wordlist-file
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/user-signup-api'
           TAG: staging
-      
+
       - <<: *push-ecr
         put: user-signup-api-repo
         params:
@@ -535,7 +535,7 @@ jobs:
     interruptible: true
     plan:
       - get: auth
-        passed: 
+        passed:
           - Authentication API Tests
           - Frontend Acceptance Tests
           - Authentication API Staging Deploy
@@ -550,11 +550,11 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/authorisation-api'
           TAG: production
-      
+
       - <<: *push-ecr
         put: auth-api-repo
         params:
@@ -572,7 +572,7 @@ jobs:
     interruptible: true
     plan:
       - get: admin
-        passed: 
+        passed:
           - Admin Tests
           - Admin Staging Deploy
 
@@ -587,11 +587,11 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/admin'
           TAG: production
-      
+
       - <<: *push-ecr
         put: admin-repo
         params:
@@ -609,7 +609,7 @@ jobs:
     interruptible: true
     plan:
       - get: frontend
-        passed: 
+        passed:
           - Frontend Tests
           - Frontend Acceptance Tests
           - Frontend Staging Deploy
@@ -624,12 +624,12 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/frontend-base'
           DOCKERFILE: src/Dockerfile.base
           TAG: production
-      
+
       - <<: *push-ecr
         put: frontend-base-repo
         params:
@@ -675,7 +675,7 @@ jobs:
     interruptible: true
     plan:
       - get: logging
-        passed: 
+        passed:
           - Logging API Tests
           - Frontend Acceptance Tests
           - Logging API Staging Deploy
@@ -691,11 +691,11 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/logging-api'
           TAG: production
-      
+
       - <<: *push-ecr
         put: logging-api-repo
         params:
@@ -713,7 +713,7 @@ jobs:
     interruptible: true
     plan:
       - get: safe-restarter
-        passed: 
+        passed:
           - Safe Restarter Tests
           - Safe Restarter Staging Deploy
 
@@ -728,11 +728,11 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/safe-restarter'
           TAG: production
-      
+
       - <<: *push-ecr
         put: safe-restarter-repo
         params:
@@ -766,11 +766,11 @@ jobs:
         - get: wordlist-file
 
       - <<: *build-deployable
-        params: 
+        params:
           <<: *build-deployable-params
           REPOSITORY: 'govwifi/user-signup-api'
           TAG: production
-      
+
       - <<: *push-ecr
         put: user-signup-api-repo
         params:
@@ -843,13 +843,13 @@ resources:
     source:
       uri: "https://github.com/alphagov/govwifi-admin.git"
       branch: master
-  
+
   - name: auth
     type: git
     source:
       uri: "https://github.com/alphagov/govwifi-authentication-api.git"
       branch: master
-  
+
   - name: logging
     type: git
     source:
@@ -984,7 +984,7 @@ resources:
       tag: '2.6.2'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
-  
+
   # Auth docker caching
   - name: auth-ruby-image
     type: registry-image
@@ -993,7 +993,7 @@ resources:
       tag: '2.5.3-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
-  
+
   # Logging docker caching
   - name: logging-ruby-image
     type: registry-image
@@ -1002,7 +1002,7 @@ resources:
       tag: '2.6.1-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
-  
+
   # User Signup docker caching
   - name: user-signup-ruby-image
     type: registry-image
@@ -1011,7 +1011,7 @@ resources:
       tag: '2.5.1-alpine'
       username: ((docker_hub_username))
       password: ((docker_hub_authtoken))
-  
+
   # Frontend docker caching
   - name: frontend-alpine-image
     type: registry-image
