@@ -566,7 +566,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-auth-api-repo
+        put: auth-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/authorisation-api
@@ -603,7 +603,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-admin-repo
+        put: admin-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/admin
@@ -641,7 +641,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-frontend-base-repo
+        put: frontend-base-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/frontend-base
@@ -654,7 +654,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-frontend-repo
+        put: frontend-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/frontend
@@ -669,7 +669,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-raddb-repo
+        put: raddb-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/raddb
@@ -707,7 +707,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-logging-api-repo
+        put: logging-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/logging-api
@@ -744,7 +744,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-safe-restarter-repo
+        put: safe-restarter-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/safe-restarter
@@ -782,7 +782,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-user-signup-api-repo
+        put: user-signup-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/user-signup-api
@@ -820,7 +820,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: production-database-backup-repo
+        put: database-backup-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/database-backup
