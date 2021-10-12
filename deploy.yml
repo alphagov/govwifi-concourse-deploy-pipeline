@@ -1142,7 +1142,7 @@ resources:
   - name: staging-wordlist-file
     type: s3
     source:
-      bucket: govwifi-staging-temp-wordlist
+      bucket: govwifi-staging-wordlist
       access_key_id: "((staging-deploy-access-key-id))"
       secret_access_key: "((staging-deploy-secret-access-key))"
       versioned_file: wordlist-short
