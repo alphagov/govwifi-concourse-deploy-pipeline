@@ -36,15 +36,25 @@ x-tasks:
     get_params:
       skip_download: true
 
-  deploy: &deploy
-    task: deploy
+  deploy: &production-deploy
+    task: production-deploy
     image: runner
     file: src/ci/tasks/deploy.yml
-    params: &deploy-params
+    params: &production-deploy-params
       STAGE:
-      AWS_ACCESS_KEY_ID: "((deploy-access-key-id))"
-      AWS_SECRET_ACCESS_KEY: "((deploy-secret-access-key))"
-      AWS_DEFAULT_REGION: "((deploy-region))"
+      AWS_ACCESS_KEY_ID: "((production-deploy-access-key-id))"
+      AWS_SECRET_ACCESS_KEY: "((production-deploy-secret-access-key))"
+      AWS_DEFAULT_REGION: "((production-deploy-region))"
+
+  staging-deploy: &staging-deploy
+    task: staging-deploy
+    image: runner
+    file: src/ci/tasks/deploy.yml
+    params: &staging-deploy-params
+      STAGE:
+      AWS_ACCESS_KEY_ID: "((staging-deploy-access-key-id))"
+      AWS_SECRET_ACCESS_KEY: "((staging-deploy-secret-access-key))"
+      AWS_DEFAULT_REGION: "((staging-deploy-region))"
 
 x-get-aliases:
   source: &get-source
@@ -309,16 +319,16 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: auth-api-repo
+        put: staging-auth-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/authorisation-api
           load_tag: staging
 
-      - <<: *deploy
+      - <<: *staging-deploy
         params:
-          <<: *deploy-params
-          STAGE: staging
+          <<: *staging-deploy-params
+          STAGE: staging-temp
 
   - name: Admin Staging Deploy
     max_in_flight: 1
@@ -338,16 +348,16 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: admin-repo
+        put: staging-admin-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/admin
           load_tag: staging
 
-      - <<: *deploy
+      - <<: *staging-deploy
         params:
-          <<: *deploy-params
-          STAGE: staging
+          <<: *staging-deploy-params
+          STAGE: staging-temp
 
   - name: Frontend Staging Deploy
     max_in_flight: 1
@@ -370,7 +380,7 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: frontend-base-repo
+        put: staging-frontend-base-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/frontend-base
@@ -384,7 +394,7 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: frontend-repo
+        put: staging-frontend-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/frontend
@@ -399,15 +409,15 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: raddb-repo
+        put: staging-raddb-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/raddb
           load_tag: staging
 
-      - <<: *deploy
+      - <<: *staging-deploy
         params:
-          <<: *deploy-params
+          <<: *staging-deploy-params
           STAGE: staging
 
   - name: Logging API Staging Deploy
@@ -429,15 +439,15 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: logging-api-repo
+        put: staging-logging-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/logging-api
           load_tag: staging
 
-      - <<: *deploy
+      - <<: *staging-deploy
         params:
-          <<: *deploy-params
+          <<: *staging-deploy-params
           STAGE: staging
 
   - name: Safe Restarter Staging Deploy
@@ -458,15 +468,15 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: safe-restarter-repo
+        put: staging-safe-restarter-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/safe-restarter
           load_tag: staging
 
-      - <<: *deploy
+      - <<: *staging-deploy
         params:
-          <<: *deploy-params
+          <<: *staging-deploy-params
           STAGE: staging
 
   - name: User Signup API Staging Deploy
@@ -479,7 +489,7 @@ jobs:
             - User Signup API Tests
         - get: deploy-tools
         - get: runner
-        - get: wordlist-file
+        - get: staging-wordlist-file
 
       - <<: *build-deployable
         params:
@@ -488,15 +498,15 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: user-signup-api-repo
+        put: staging-user-signup-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/user-signup-api
           load_tag: staging
 
-      - <<: *deploy
+      - <<: *staging-deploy
         params:
-          <<: *deploy-params
+          <<: *staging-deploy-params
           STAGE: staging
 
   - name: Database Backup Staging Deploy
@@ -517,15 +527,15 @@ jobs:
           TAG: staging
 
       - <<: *push-ecr
-        put: database-backup-repo
+        put: staging-database-backup-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/database-backup
           load_tag: staging
 
-      - <<: *deploy
+      - <<: *staging-deploy
         params:
-          <<: *deploy-params
+          <<: *staging-deploy-params
           STAGE: staging
 
   ###### Production Deploys #######
@@ -556,15 +566,15 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: auth-api-repo
+        put: production-auth-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/authorisation-api
           load_tag: production
 
-      - <<: *deploy
+      - <<: *production-deploy
         params:
-          <<: *deploy-params
+          <<: *production-deploy-params
           STAGE: production
 
   - name: Confirm Deploy to Admin Production
@@ -593,15 +603,15 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: admin-repo
+        put: production-admin-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/admin
           load_tag: production
 
-      - <<: *deploy
+      - <<: *production-deploy
         params:
-          <<: *deploy-params
+          <<: *production-deploy-params
           STAGE: production
 
   - name: Confirm Deploy to Frontend Production
@@ -631,7 +641,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: frontend-base-repo
+        put: production-frontend-base-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/frontend-base
@@ -644,7 +654,7 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: frontend-repo
+        put: production-frontend-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/frontend
@@ -659,15 +669,15 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: raddb-repo
+        put: production-raddb-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/raddb
           load_tag: production
 
-      - <<: *deploy
+      - <<: *production-deploy
         params:
-          <<: *deploy-params
+          <<: *production-deploy-params
           STAGE: production
 
   - name: Confirm Deploy to Logging API Production
@@ -697,15 +707,15 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: logging-api-repo
+        put: production-logging-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/logging-api
           load_tag: production
 
-      - <<: *deploy
+      - <<: *production-deploy
         params:
-          <<: *deploy-params
+          <<: *production-deploy-params
           STAGE: production
 
   - name: Confirm Deploy to Safe Restarter Production
@@ -734,15 +744,15 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: safe-restarter-repo
+        put: production-safe-restarter-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/safe-restarter
           load_tag: production
 
-      - <<: *deploy
+      - <<: *production-deploy
         params:
-          <<: *deploy-params
+          <<: *production-deploy-params
           STAGE: production
 
   - name: Confirm Deploy to User Signup API Production
@@ -763,7 +773,7 @@ jobs:
           passed: [Confirm Deploy to User Signup API Production]
         - get: deploy-tools
         - get: runner
-        - get: wordlist-file
+        - get: production-wordlist-file
 
       - <<: *build-deployable
         params:
@@ -772,15 +782,15 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: user-signup-api-repo
+        put: production-user-signup-api-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/user-signup-api
           load_tag: production
 
-      - <<: *deploy
+      - <<: *production-deploy
         params:
-          <<: *deploy-params
+          <<: *production-deploy-params
           STAGE: production
 
   - name: Confirm Deploy to Database Backup Production
@@ -810,15 +820,15 @@ jobs:
           TAG: production
 
       - <<: *push-ecr
-        put: database-backup-repo
+        put: production-database-backup-repo
         params:
           <<: *push-ecr-params
           load_repository: govwifi/database-backup
           load_tag: production
 
-      - <<: *deploy
+      - <<: *production-deploy
         params:
-          <<: *deploy-params
+          <<: *production-deploy-params
           STAGE: production
 
 resources:
@@ -887,77 +897,149 @@ resources:
       branch: master
 
   # Docker repositories
-  - name: admin-repo
+  - name: production-admin-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/admin"
+      repository: "((production-deploy-repository))/govwifi/admin"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
 
-  - name: auth-api-repo
+  - name: staging-admin-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/authorisation-api"
+      repository: "((staging-deploy-repository))/govwifi/admin"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
 
-  - name: frontend-base-repo
+  - name: production-auth-api-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/frontend-base"
+      repository: "((production-deploy-repository))/govwifi/authorisation-api"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
 
-  - name: frontend-repo
+  - name: staging-auth-api-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/frontend"
+      repository: "((staging-deploy-repository))/govwifi/authorisation-api"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
 
-  - name: raddb-repo
+  - name: production-frontend-base-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/raddb"
+      repository: "((production-deploy-repository))/govwifi/frontend-base"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
 
-  - name: logging-api-repo
+  - name: staging-frontend-base-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/logging-api"
+      repository: "((staging-deploy-repository))/govwifi/frontend-base"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
 
-  - name: safe-restarter-repo
+  - name: production-frontend-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/safe-restarter"
+      repository: "((production-deploy-repository))/govwifi/frontend"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
 
-  - name: user-signup-api-repo
+  - name: staging-frontend-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/user-signup-api"
+      repository: "((staging-deploy-repository))/govwifi/frontend"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
 
-  - name: database-backup-repo
+  - name: production-raddb-repo
     type: docker-image
     source:
-      repository: "((deploy-repository))/govwifi/database-backup"
+      repository: "((production-deploy-repository))/govwifi/raddb"
       tag: latest
-      aws_access_key_id: ((deploy-access-key-id))
-      aws_secret_access_key: ((deploy-secret-access-key))
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
+
+  - name: staging-raddb-repo
+    type: docker-image
+    source:
+      repository: "((staging-deploy-repository))/govwifi/raddb"
+      tag: latest
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
+
+  - name: production-logging-api-repo
+    type: docker-image
+    source:
+      repository: "((production-deploy-repository))/govwifi/logging-api"
+      tag: latest
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
+
+  - name: staging-logging-api-repo
+    type: docker-image
+    source:
+      repository: "((staging-deploy-repository))/govwifi/logging-api"
+      tag: latest
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
+
+  - name: production-safe-restarter-repo
+    type: docker-image
+    source:
+      repository: "((production-deploy-repository))/govwifi/safe-restarter"
+      tag: latest
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
+
+  - name: staging-safe-restarter-repo
+    type: docker-image
+    source:
+      repository: "((staging-deploy-repository))/govwifi/safe-restarter"
+      tag: latest
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
+
+  - name: production-user-signup-api-repo
+    type: docker-image
+    source:
+      repository: "((production-deploy-repository))/govwifi/user-signup-api"
+      tag: latest
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
+
+  - name: staging-user-signup-api-repo
+    type: docker-image
+    source:
+      repository: "((staging-deploy-repository))/govwifi/user-signup-api"
+      tag: latest
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
+
+  - name: production-database-backup-repo
+    type: docker-image
+    source:
+      repository: "((production-deploy-repository))/govwifi/database-backup"
+      tag: latest
+      aws_access_key_id: ((production-deploy-access-key-id))
+      aws_secret_access_key: ((production-deploy-secret-access-key))
+
+  - name: staging-database-backup-repo
+    type: docker-image
+    source:
+      repository: "((staging-deploy-repository))/govwifi/database-backup"
+      tag: latest
+      aws_access_key_id: ((staging-deploy-access-key-id))
+      aws_secret_access_key: ((staging-deploy-secret-access-key))
 
   # common resources for caching
   - name: mysql-image
@@ -1047,12 +1129,22 @@ resources:
       tag: latest
 
   # S3 Resources
-  - name: wordlist-file
+  - name: production-wordlist-file
     type: s3
     source:
       bucket: govwifi-wordlist
-      access_key_id: "((deploy-access-key-id))"
-      secret_access_key: "((deploy-secret-access-key))"
+      access_key_id: "((production-deploy-access-key-id))"
+      secret_access_key: "((production-deploy-secret-access-key))"
+      versioned_file: wordlist-short
+      region_name: eu-west-2
+
+  # S3 Resources
+  - name: staging-wordlist-file
+    type: s3
+    source:
+      bucket: govwifi-staging-temp-wordlist
+      access_key_id: "((staging-deploy-access-key-id))"
+      secret_access_key: "((staging-deploy-secret-access-key))"
       versioned_file: wordlist-short
       region_name: eu-west-2
 
