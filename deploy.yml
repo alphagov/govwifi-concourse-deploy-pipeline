@@ -489,7 +489,7 @@ jobs:
             - User Signup API Tests
         - get: deploy-tools
         - get: runner
-        - get: staging-wordlist-file
+        - get: wordlist-file
 
       - <<: *build-deployable
         params:
@@ -773,7 +773,7 @@ jobs:
           passed: [Confirm Deploy to User Signup API Production]
         - get: deploy-tools
         - get: runner
-        - get: production-wordlist-file
+        - get: wordlist-file
 
       - <<: *build-deployable
         params:
@@ -1129,22 +1129,12 @@ resources:
       tag: latest
 
   # S3 Resources
-  - name: production-wordlist-file
+  - name: wordlist-file
     type: s3
     source:
       bucket: govwifi-wordlist
       access_key_id: "((production-deploy-access-key-id))"
       secret_access_key: "((production-deploy-secret-access-key))"
-      versioned_file: wordlist-short
-      region_name: eu-west-2
-
-  # S3 Resources
-  - name: staging-wordlist-file
-    type: s3
-    source:
-      bucket: govwifi-staging-wordlist
-      access_key_id: "((staging-deploy-access-key-id))"
-      secret_access_key: "((staging-deploy-secret-access-key))"
       versioned_file: wordlist-short
       region_name: eu-west-2
 
