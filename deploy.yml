@@ -357,7 +357,7 @@ jobs:
       - <<: *staging-deploy
         params:
           <<: *staging-deploy-params
-          STAGE: staging-temp
+          STAGE: staging
 
   - name: Frontend Staging Deploy
     max_in_flight: 1
