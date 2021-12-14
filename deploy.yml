@@ -1132,7 +1132,7 @@ resources:
   - name: wordlist-file
     type: s3
     source:
-      bucket: govwifi-wordlist
+      bucket: wordlist-20211214162103864400000001
       access_key_id: "((production-deploy-access-key-id))"
       secret_access_key: "((production-deploy-secret-access-key))"
       versioned_file: wordlist-short
