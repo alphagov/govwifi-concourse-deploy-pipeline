@@ -66,7 +66,7 @@ function run_task_with_command() {
 
 function form_command_override() {
   local override_command="${1}"
-  override_command="${override_command}" python -c \
+  override_command="${override_command}" python3 -c \
     'import os,json,shlex; print(json.dumps(shlex.split(os.environ["override_command"])))'
 }
 
