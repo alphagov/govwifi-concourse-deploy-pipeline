@@ -372,21 +372,6 @@ jobs:
         - get: runner
 
       - <<: *build-deployable
-        task: build-frontend-base-image
-        params:
-          <<: *build-deployable-params
-          REPOSITORY: 'govwifi/frontend-base'
-          DOCKERFILE: src/Dockerfile.base
-          TAG: staging
-
-      - <<: *push-ecr
-        put: staging-frontend-base-repo
-        params:
-          <<: *push-ecr-params
-          load_repository: govwifi/frontend-base
-          load_tag: staging
-
-      - <<: *build-deployable
         task: build-frontend-image
         params:
           <<: *build-deployable-params
@@ -632,20 +617,6 @@ jobs:
           passed: [Confirm Deploy to Frontend Production]
         - get: deploy-tools
         - get: runner
-
-      - <<: *build-deployable
-        params:
-          <<: *build-deployable-params
-          REPOSITORY: 'govwifi/frontend-base'
-          DOCKERFILE: src/Dockerfile.base
-          TAG: production
-
-      - <<: *push-ecr
-        put: production-frontend-base-repo
-        params:
-          <<: *push-ecr-params
-          load_repository: govwifi/frontend-base
-          load_tag: production
 
       - <<: *build-deployable
         params:
@@ -925,22 +896,6 @@ resources:
     type: docker-image
     source:
       repository: "((staging-deploy-repository))/govwifi/authorisation-api"
-      tag: latest
-      aws_access_key_id: ((staging-deploy-access-key-id))
-      aws_secret_access_key: ((staging-deploy-secret-access-key))
-
-  - name: production-frontend-base-repo
-    type: docker-image
-    source:
-      repository: "((production-deploy-repository))/govwifi/frontend-base"
-      tag: latest
-      aws_access_key_id: ((production-deploy-access-key-id))
-      aws_secret_access_key: ((production-deploy-secret-access-key))
-
-  - name: staging-frontend-base-repo
-    type: docker-image
-    source:
-      repository: "((staging-deploy-repository))/govwifi/frontend-base"
       tag: latest
       aws_access_key_id: ((staging-deploy-access-key-id))
       aws_secret_access_key: ((staging-deploy-secret-access-key))
